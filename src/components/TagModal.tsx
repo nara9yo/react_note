@@ -108,11 +108,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 10000
-      }}
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000"
       onClick={handleClose}
     >
       {/* 모달 컨텐츠 */}

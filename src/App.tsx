@@ -149,7 +149,7 @@ function AppContent() {
           {/* 모바일에서 사이드바가 열려있을 때 오버레이 */}
           {isMobile && isSidebarOpen && (
             <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              className="fixed inset-0 z-40 md:hidden backdrop-blur-xs"
               onClick={closeSidebar}
             />
           )}

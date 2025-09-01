@@ -61,11 +61,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 10001
-      }}
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10001"
       onClick={onCancel}
     >
       <div 

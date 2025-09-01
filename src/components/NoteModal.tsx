@@ -149,11 +149,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 9999
-      }}
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999"
     >
       {/* 모달 컨텐츠 */}
       <div 
