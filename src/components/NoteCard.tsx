@@ -216,13 +216,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
               {getPriorityText(note.priority)}
             </span>
             <button
-              onClick={handlePin}
+              onClick={note.deleted ? undefined : handlePin}
+              disabled={note.deleted}
               className={`p-1 rounded transition-colors duration-200 ${
-                note.pinned 
-                  ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
-                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                note.deleted
+                  ? 'text-gray-300 cursor-not-allowed' // trash에서는 비활성화
+                  : note.pinned 
+                    ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
+                    : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
               }`}
-              title={note.pinned ? "고정 해제" : "고정"}
+              title={note.deleted ? "휴지통에서는 고정 상태를 변경할 수 없습니다" : (note.pinned ? "고정 해제" : "고정")}
             >
               <Pin 
                 className="w-4 h-4" 
