@@ -25,3 +25,4 @@ dist-ssr
 
 # 참고 파일
 example
+.cursor
