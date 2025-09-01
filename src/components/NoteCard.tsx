@@ -2,7 +2,7 @@ import { useState, Suspense, lazy } from 'react';
 import type { Note } from '../types';
 import { useAppDispatch } from '../app/hooks';
 import { deleteNote, updateNote } from '../features/notes/notesSlice';
-import { Edit, Trash2, Calendar, Pin, Archive, ArchiveRestore, RotateCcw } from 'lucide-react';
+import { Edit, Trash2, Calendar, Pin, Archive, ArchiveRestore, RotateCcw, CheckSquare, Square } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 
 // 지연 로딩을 위한 NoteModal
@@ -10,9 +10,12 @@ const NoteModal = lazy(() => import('./NoteModal'));
 
 interface NoteCardProps {
   note: Note;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelectionToggle?: (noteId: string) => void;
 }
 
-const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
+const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle }) => {
   const dispatch = useAppDispatch();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
@@ -55,8 +58,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
       // 일반 노트인 경우 - trash로 이동
       setConfirmModal({
         isOpen: true,
-        title: '휴지통으로 이동',
-        message: '이 노트를 휴지통으로 이동하시겠습니까?',
+        title: 'Trash로 이동',
+        message: '이 노트를 Trash로 이동하시겠습니까?',
         variant: 'warning',
         onConfirm: async () => {
           try {
@@ -200,17 +203,35 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100 overflow-hidden h-full flex flex-col"
+      className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden h-full flex flex-col ${
+        isSelectionMode && isSelected 
+          ? 'border-blue-500 bg-blue-50' 
+          : 'border-gray-100'
+      }`}
       style={{ 
-        backgroundColor: note.backgroundColor,
+        backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
       }}
     >
       <div className="p-4 space-y-3 flex-1 flex flex-col">
-        {/* 상단: 제목(왼쪽) + 우선순위 + 압정아이콘(오른쪽) */}
+        {/* 상단: 선택 체크박스 + 제목(왼쪽) + 우선순위 + 압정아이콘(오른쪽) */}
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 flex-1 mr-3">
-            {note.title}
-          </h3>
+          <div className="flex items-center gap-3 flex-1 mr-3">
+            {isSelectionMode && (
+              <button
+                onClick={() => onSelectionToggle?.(note.id)}
+                className="p-1 rounded transition-colors duration-200 hover:bg-gray-100"
+              >
+                {isSelected ? (
+                  <CheckSquare className="w-5 h-5 text-blue-600" />
+                ) : (
+                  <Square className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+            )}
+            <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 flex-1">
+              {note.title}
+            </h3>
+          </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(note.priority)}`}>
               {getPriorityText(note.priority)}
@@ -225,7 +246,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
                     ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
                     : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
               }`}
-              title={note.deleted ? "휴지통에서는 고정 상태를 변경할 수 없습니다" : (note.pinned ? "고정 해제" : "고정")}
+              title={note.deleted ? "Trash에서는 고정 상태를 변경할 수 없습니다" : (note.pinned ? "고정 해제" : "고정")}
             >
               <Pin 
                 className="w-4 h-4" 

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError } from '../features/notes/notesSlice';
+import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError, updateNote, deleteNote } from '../features/notes/notesSlice';
 import NoteCard from './NoteCard';
 import type { Note } from '../types';
-import { Loader2, AlertCircle, FileText, Pin, SortAsc, SortDesc } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pin, SortAsc, SortDesc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore } from 'lucide-react';
 
 interface NoteListProps {
   selectedTag: string | null;
@@ -17,6 +17,8 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   const status = useAppSelector(selectNotesStatus);
   const error = useAppSelector(selectNotesError);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
 
   // 컴포넌트 마운트 시 노트 목록 불러오기
   useEffect(() => {
@@ -27,7 +29,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
 
   // 노트 필터링 및 정렬
   const getFilteredAndSortedNotes = () => {
-    let filteredNotes = notes.filter(note => {
+    const filteredNotes = notes.filter(note => {
       // 뷰별 필터링 (삭제된 노트는 trash에만 표시)
       if (currentView === 'archive' && (!note.archived || note.deleted)) return false;
       if (currentView === 'trash' && !note.deleted) return false;
@@ -79,6 +81,90 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  // 선택 모드 토글
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedNotes([]);
+  };
+
+  // 노트 선택/해제
+  const toggleNoteSelection = (noteId: string) => {
+    setSelectedNotes(prev => 
+      prev.includes(noteId) 
+        ? prev.filter(id => id !== noteId)
+        : [...prev, noteId]
+    );
+  };
+
+  // 전체 선택/해제
+  const toggleSelectAll = () => {
+    if (selectedNotes.length === filteredNotes.length) {
+      setSelectedNotes([]);
+    } else {
+      setSelectedNotes(filteredNotes.map(note => note.id));
+    }
+  };
+
+  // 선택된 노트 복구
+  const handleRestoreSelected = async () => {
+    try {
+      await Promise.all(
+        selectedNotes.map(noteId => 
+          dispatch(updateNote({ id: noteId, deleted: false })).unwrap()
+        )
+      );
+      setSelectedNotes([]);
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error('노트 복구 실패:', error);
+    }
+  };
+
+  // 선택된 노트 완전 삭제 (Trash용)
+  const handleDeleteSelected = async () => {
+    try {
+      await Promise.all(
+        selectedNotes.map(noteId => 
+          dispatch(deleteNote(noteId)).unwrap()
+        )
+      );
+      setSelectedNotes([]);
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error('노트 삭제 실패:', error);
+    }
+  };
+
+  // 선택된 노트 Trash로 이동 (Archive용)
+  const handleMoveToTrashSelected = async () => {
+    try {
+      await Promise.all(
+        selectedNotes.map(noteId => 
+          dispatch(updateNote({ id: noteId, deleted: true })).unwrap()
+        )
+      );
+      setSelectedNotes([]);
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error('노트 Trash 이동 실패:', error);
+    }
+  };
+
+  // 선택된 노트 보관 해제 (Archive용)
+  const handleUnarchiveSelected = async () => {
+    try {
+      await Promise.all(
+        selectedNotes.map(noteId => 
+          dispatch(updateNote({ id: noteId, archived: false })).unwrap()
+        )
+      );
+      setSelectedNotes([]);
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error('노트 보관 해제 실패:', error);
+    }
+  };
+
   // 로딩 상태
   if (status === 'loading') {
     return (
@@ -113,7 +199,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
       : currentView === 'archive' 
         ? '보관된 노트가 없습니다.'
         : currentView === 'trash'
-          ? '휴지통이 비어있습니다.'
+          ? 'Trash가 비어있습니다.'
           : '노트가 없습니다.';
 
     return (
@@ -130,9 +216,81 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   // 노트 목록 렌더링
   return (
     <div className="space-y-6">
-      {/* 상단 헤더 - 정렬 버튼 */}
+      {/* 상단 헤더 - 정렬 버튼 및 선택 모드 버튼 */}
       {filteredNotes.length > 0 && (
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+                     {/* Trash와 Archive에서 선택 모드 버튼 표시 */}
+           {(currentView === 'trash' || currentView === 'archive') && (
+            <div className="flex items-center gap-2">
+              {isSelectionMode ? (
+                <>
+                  <button
+                    onClick={toggleSelectAll}
+                    className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                  >
+                    {selectedNotes.length === filteredNotes.length ? <CheckSquare size={14} /> : <Square size={14} />}
+                    {selectedNotes.length === filteredNotes.length ? '전체 해제' : '전체 선택'}
+                  </button>
+                  <button
+                    onClick={toggleSelectionMode}
+                    className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition-colors duration-200"
+                  >
+                    취소
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={toggleSelectionMode}
+                  className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                >
+                  <CheckSquare size={14} />
+                  선택
+                </button>
+              )}
+              
+                             {/* 선택된 노트가 있을 때 액션 버튼들 */}
+               {isSelectionMode && selectedNotes.length > 0 && (
+                 <div className="flex items-center gap-2">
+                   {currentView === 'trash' ? (
+                     <>
+                       <button
+                         onClick={handleRestoreSelected}
+                         className="px-3 py-1.5 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200 transition-colors duration-200 flex items-center gap-1"
+                       >
+                         <RotateCcw size={14} />
+                         복구 ({selectedNotes.length})
+                       </button>
+                       <button
+                         onClick={handleDeleteSelected}
+                         className="px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors duration-200 flex items-center gap-1"
+                       >
+                         <Trash2 size={14} />
+                         삭제 ({selectedNotes.length})
+                       </button>
+                     </>
+                                       ) : currentView === 'archive' ? (
+                      <>
+                        <button
+                          onClick={handleUnarchiveSelected}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                        >
+                          <ArchiveRestore size={14} />
+                          보관 해제 ({selectedNotes.length})
+                        </button>
+                        <button
+                          onClick={handleMoveToTrashSelected}
+                          className="px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors duration-200 flex items-center gap-1"
+                        >
+                          <Trash2 size={14} />
+                          Trash로 이동 ({selectedNotes.length})
+                        </button>
+                      </>
+                    ) : null}
+                 </div>
+               )}
+            </div>
+          )}
+          
           <button
             onClick={toggleSortOrder}
             className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition-colors duration-200 flex items-center gap-1"
@@ -154,7 +312,13 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pinnedNotes.map((note: Note) => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard 
+                key={note.id} 
+                note={note} 
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedNotes.includes(note.id)}
+                onSelectionToggle={toggleNoteSelection}
+              />
             ))}
           </div>
         </div>
@@ -169,7 +333,13 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {regularNotes.map((note: Note) => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard 
+                key={note.id} 
+                note={note} 
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedNotes.includes(note.id)}
+                onSelectionToggle={toggleNoteSelection}
+              />
             ))}
           </div>
         </div>
