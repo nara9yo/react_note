@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react';
 import { useAppDispatch } from '../app/hooks';
 import { addNewNote, updateNote } from '../features/notes/notesSlice';
 import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../types';
-import { DEFAULT_TAGS, PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
+import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save } from 'lucide-react';
+import PortalModal from './PortalModal';
+
+// 지연 로딩을 위한 TagModal
+const TagModal = lazy(() => import('./TagModal'));
 
 interface NoteModalProps {
   isOpen: boolean;
@@ -20,6 +24,8 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
   const [priority, setPriority] = useState<Priority>(DEFAULT_NOTE_DATA.priority);
   const [backgroundColor, setBackgroundColor] = useState(DEFAULT_NOTE_DATA.backgroundColor);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   // 편집 모드일 때 기존 노트 데이터로 초기화
   useEffect(() => {
@@ -35,41 +41,19 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
   // 노트 생성/수정 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (title.trim() === '') {
       alert('제목을 입력해주세요.');
       return;
     }
-
     setIsSubmitting(true);
-    
     try {
       if (mode === 'create') {
-        // 새 노트 생성
-        const noteData: CreateNoteData = {
-          title: title.trim(),
-          content: content.trim(),
-          tags: selectedTags,
-          priority,
-          backgroundColor,
-        };
-        
+        const noteData: CreateNoteData = { title: title.trim(), content: content.trim(), tags: selectedTags, priority, backgroundColor };
         await dispatch(addNewNote(noteData)).unwrap();
       } else if (mode === 'edit' && note) {
-        // 기존 노트 수정
-        const updateData: UpdateNoteData = {
-          id: note.id,
-          title: title.trim(),
-          content: content.trim(),
-          tags: selectedTags,
-          priority,
-          backgroundColor,
-        };
-        
+        const updateData: UpdateNoteData = { id: note.id, title: title.trim(), content: content.trim(), tags: selectedTags, priority, backgroundColor };
         await dispatch(updateNote(updateData)).unwrap();
       }
-      
-      // 성공 시 폼 초기화 및 모달 닫기
       handleClose();
     } catch (error) {
       console.error(`노트 ${mode === 'create' ? '생성' : '수정'} 실패:`, error);
@@ -80,33 +64,54 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
   };
 
   // 모달 닫기 시 폼 초기화
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setTitle('');
     setContent('');
     setSelectedTags([]);
     setPriority(DEFAULT_NOTE_DATA.priority);
     setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
     onClose();
-  };
+  }, [onClose]);
 
-  // ESC 키로 모달 닫기
+  // 외부 클릭 감지하여 모달 닫기
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+    const handleClickOutside = (event: MouseEvent) => {
+      // 태그 모달이 열려있을 때는 이 로직을 비활성화
+      if (isTagModalOpen) {
+        return;
+      }
+      if (modalContentRef.current && !modalContentRef.current.contains(event.target as Node)) {
         handleClose();
       }
     };
 
     if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, isTagModalOpen, handleClose]);
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (!isTagModalOpen) {
+          handleClose();
+        }
+      }
+    };
+    if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
-
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, isTagModalOpen, handleClose]);
 
   if (!isOpen) return null;
 
@@ -117,14 +122,18 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 배경 오버레이 */}
+      {/* 배경 오버레이 (클릭 핸들러 제거) */}
       <div 
         className="absolute inset-0 bg-black bg-opacity-50"
-        onClick={handleClose}
       />
       
-      {/* 모달 컨텐츠 */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden">
+      {/* 모달 컨텐츠 (ref 할당, onClick 핸들러 제거) */}
+      <div 
+        ref={modalContentRef}
+        className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+      >
         {/* 헤더 */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">{modalTitle}</h2>
@@ -178,43 +187,53 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
 
           {/* 태그 선택 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <TagIcon className="inline w-4 h-4 mr-1" />
-              태그
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {DEFAULT_TAGS.map((tag) => (
-                <button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => {
-                    if (selectedTags.find(t => t.id === tag.id)) {
-                      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
-                    } else {
-                      setSelectedTags([...selectedTags, tag]);
-                    }
-                  }}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
-                    selectedTags.find(t => t.id === tag.id)
-                      ? 'text-white'
-                      : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  style={{
-                    backgroundColor: selectedTags.find(t => t.id === tag.id) ? tag.color : undefined,
-                  }}
-                >
-                  {tag.name}
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <span className="block text-sm font-medium text-gray-700">
+                <TagIcon className="inline w-4 h-4 mr-1" />
+                태그
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsTagModalOpen(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                태그 관리
+              </button>
             </div>
+            {/* 선택된 태그 표시 */}
+            {selectedTags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+                    style={{ backgroundColor: tag.color }}
+                  >
+                    <TagIcon className="w-3 h-3 mr-1" />
+                    {tag.name}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTags(selectedTags.filter(t => t.id !== tag.id))}
+                      className="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full w-4 h-4 flex items-center justify-center"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm py-2">
+                선택된 태그가 없습니다. 태그 관리를 클릭하여 태그를 선택하세요.
+              </div>
+            )}
           </div>
 
           {/* 우선순위 선택 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <span className="block text-sm font-medium text-gray-700 mb-2">
               <Flag className="inline w-4 h-4 mr-1" />
               우선순위
-            </label>
+            </span>
             <div className="flex gap-2">
               {PRIORITY_OPTIONS.map((option) => (
                 <button
@@ -222,13 +241,9 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
                   type="button"
                   onClick={() => setPriority(option.value)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    priority === option.value
-                      ? 'text-white'
-                      : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                    priority === option.value ? 'text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                   }`}
-                  style={{
-                    backgroundColor: priority === option.value ? option.color : undefined,
-                  }}
+                  style={{ backgroundColor: priority === option.value ? option.color : undefined }}
                 >
                   {option.label}
                 </button>
@@ -238,61 +253,44 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
 
           {/* 배경색 선택 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="backgroundColor" className="block text-sm font-medium text-gray-700 mb-2">
               <Palette className="inline w-4 h-4 mr-1" />
               배경색
             </label>
             <div className="flex items-center gap-3">
-              {/* 미리 정의된 색상 */}
               {BACKGROUND_COLORS.map((color) => (
                 <button
                   key={color.value}
                   type="button"
                   onClick={() => setBackgroundColor(color.value)}
                   className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
-                    backgroundColor === color.value
-                      ? 'border-blue-500 scale-110'
-                      : 'border-gray-300 hover:border-gray-400'
+                    backgroundColor === color.value ? 'border-blue-500 scale-110' : 'border-gray-300 hover:border-gray-400'
                   }`}
                   style={{ backgroundColor: color.preview }}
                   title={color.label}
                 />
               ))}
-              
-              {/* 구분선 */}
               <div className="w-px h-8 bg-gray-300 mx-2" />
-              
-              {/* 사용자 정의 색상 */}
               <div className="flex items-center gap-2">
                 <input
+                  id="backgroundColor"
                   type="color"
                   value={backgroundColor}
                   onChange={(e) => setBackgroundColor(e.target.value)}
                   className="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors duration-200"
                   title="사용자 정의 색상"
                 />
-                <span className="text-sm text-gray-500 font-mono min-w-[70px]">
-                  {backgroundColor}
-                </span>
+                <span className="text-sm text-gray-500 font-mono min-w-[70px]">{backgroundColor}</span>
               </div>
             </div>
           </div>
 
           {/* 버튼 그룹 */}
           <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="btn-secondary"
-              disabled={isSubmitting}
-            >
+            <button type="button" onClick={handleClose} className="btn-secondary" disabled={isSubmitting}>
               취소
             </button>
-            <button
-              type="submit"
-              className="btn-primary flex items-center space-x-2"
-              disabled={isSubmitting}
-            >
+            <button type="submit" className="btn-primary flex items-center space-x-2" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -308,6 +306,18 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
           </div>
         </form>
       </div>
+
+      {/* 태그 모달 - Portal로 렌더링 */}
+      <PortalModal isOpen={isTagModalOpen}>
+        <Suspense fallback={null}>
+          <TagModal
+            isOpen={isTagModalOpen}
+            onClose={() => setIsTagModalOpen(false)}
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
+          />
+        </Suspense>
+      </PortalModal>
     </div>
   );
 };

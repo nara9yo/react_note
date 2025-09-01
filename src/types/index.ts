@@ -6,6 +6,7 @@ export interface Tag {
   id: string;
   name: string;
   color: string;
+  usageCount?: number; // 사용 횟수 (태그 선택 시 표시용)
 }
 
 // Note 타입 정의

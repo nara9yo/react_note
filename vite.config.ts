@@ -24,12 +24,20 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom'],
-            firebase: ['firebase/app', 'firebase/auth'],
-            redux: ['@reduxjs/toolkit', 'react-redux']
-          }
-        }
-      }
+            // React 핵심 라이브러리
+            'react-vendor': ['react', 'react-dom'],
+            // Redux 관련
+            'redux-vendor': ['@reduxjs/toolkit', 'react-redux'],
+            // Firebase 관련 (더 세분화)
+            'firebase-core': ['firebase/app'],
+            'firebase-firestore': ['firebase/firestore'],
+            // UI 컴포넌트 라이브러리
+            'ui-vendor': ['lucide-react'],
+          },
+        },
+      },
+      // 청크 크기 경고 임계값 조정
+      chunkSizeWarningLimit: 1000,
     },
     test: {
       environment: 'jsdom',
