@@ -1,8 +1,21 @@
+// 우선순위 타입
+export type Priority = 'low' | 'medium' | 'high';
+
+// 태그 타입
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 // Note 타입 정의
 export interface Note {
   id: string;
   title: string;
   content: string;
+  tags: Tag[];
+  priority: Priority;
+  backgroundColor: string;
   createdAt: string; // ISO 8601 형식
   updatedAt: string; // ISO 8601 형식
 }
@@ -11,6 +24,9 @@ export interface Note {
 export interface CreateNoteData {
   title: string;
   content: string;
+  tags: Tag[];
+  priority: Priority;
+  backgroundColor: string;
 }
 
 // 노트 수정 시 사용하는 타입
@@ -18,6 +34,9 @@ export interface UpdateNoteData {
   id: string;
   title?: string;
   content?: string;
+  tags?: Tag[];
+  priority?: Priority;
+  backgroundColor?: string;
 }
 
 // API 응답 상태

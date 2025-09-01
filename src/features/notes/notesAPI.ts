@@ -28,6 +28,9 @@ export const fetchNotesAPI = async (): Promise<Note[]> => {
         id: doc.id,
         title: data.title,
         content: data.content,
+        tags: data.tags || [],
+        priority: data.priority || 'medium',
+        backgroundColor: data.backgroundColor || '#ffffff',
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
       });
@@ -46,6 +49,9 @@ export const addNoteAPI = async (noteData: CreateNoteData): Promise<Note> => {
     const now = new Date().toISOString();
     const noteToAdd = {
       ...noteData,
+      tags: noteData.tags || [],
+      priority: noteData.priority || 'medium',
+      backgroundColor: noteData.backgroundColor || '#ffffff',
       createdAt: now,
       updatedAt: now,
     };
@@ -96,6 +102,9 @@ export const updateNoteAPI = async (noteData: UpdateNoteData): Promise<Note> => 
       id: noteDoc.id,
       title: data.title,
       content: data.content,
+      tags: data.tags || [],
+      priority: data.priority || 'medium',
+      backgroundColor: data.backgroundColor || '#ffffff',
       createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
       updatedAt: now,
     };

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch } from '../app/hooks';
 import { addNewNote } from '../features/notes/notesSlice';
-import type { CreateNoteData } from '../types';
-import { Plus, X } from 'lucide-react';
+import type { CreateNoteData, Tag, Priority } from '../types';
+import { DEFAULT_TAGS, PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
+import { Plus, X, Tag as TagIcon, Flag, Palette } from 'lucide-react';
 
 interface CreateNoteModalProps {
   isOpen: boolean;
@@ -13,6 +14,9 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({ isOpen, onClose }) =>
   const dispatch = useAppDispatch();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [priority, setPriority] = useState<Priority>(DEFAULT_NOTE_DATA.priority);
+  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_NOTE_DATA.backgroundColor);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 노트 생성 처리
@@ -30,6 +34,9 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({ isOpen, onClose }) =>
       const noteData: CreateNoteData = {
         title: title.trim(),
         content: content.trim(),
+        tags: selectedTags,
+        priority,
+        backgroundColor,
       };
       
       await dispatch(addNewNote(noteData)).unwrap();
@@ -37,6 +44,9 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({ isOpen, onClose }) =>
       // 성공 시 폼 초기화 및 모달 닫기
       setTitle('');
       setContent('');
+      setSelectedTags([]);
+      setPriority(DEFAULT_NOTE_DATA.priority);
+      setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
       onClose();
     } catch (error) {
       console.error('노트 생성 실패:', error);
@@ -50,6 +60,9 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({ isOpen, onClose }) =>
   const handleClose = () => {
     setTitle('');
     setContent('');
+    setSelectedTags([]);
+    setPriority(DEFAULT_NOTE_DATA.priority);
+    setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
     onClose();
   };
 
@@ -125,9 +138,93 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({ isOpen, onClose }) =>
               onChange={(e) => setContent(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200 resize-none"
               placeholder="노트 내용을 입력하세요"
-              rows={8}
+              rows={6}
               disabled={isSubmitting}
             />
+          </div>
+
+          {/* 태그 선택 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <TagIcon className="inline w-4 h-4 mr-1" />
+              태그
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {DEFAULT_TAGS.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => {
+                    if (selectedTags.find(t => t.id === tag.id)) {
+                      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+                    } else {
+                      setSelectedTags([...selectedTags, tag]);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
+                    selectedTags.find(t => t.id === tag.id)
+                      ? 'text-white'
+                      : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                  }`}
+                  style={{
+                    backgroundColor: selectedTags.find(t => t.id === tag.id) ? tag.color : undefined,
+                  }}
+                >
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 우선순위 선택 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Flag className="inline w-4 h-4 mr-1" />
+              우선순위
+            </label>
+            <div className="flex gap-2">
+              {PRIORITY_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setPriority(option.value)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    priority === option.value
+                      ? 'text-white'
+                      : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                  }`}
+                  style={{
+                    backgroundColor: priority === option.value ? option.color : undefined,
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 배경색 선택 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Palette className="inline w-4 h-4 mr-1" />
+              배경색
+            </label>
+            <div className="flex gap-2">
+              {BACKGROUND_COLORS.map((color) => (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => setBackgroundColor(color.value)}
+                  className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
+                    backgroundColor === color.value
+                      ? 'border-blue-500 scale-110'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  style={{ backgroundColor: color.preview }}
+                  title={color.label}
+                />
+              ))}
+            </div>
           </div>
 
           {/* 버튼 그룹 */}
