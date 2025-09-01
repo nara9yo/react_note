@@ -19,6 +19,9 @@ export interface Note {
   backgroundColor: string;
   createdAt: string; // ISO 8601 형식
   updatedAt: string; // ISO 8601 형식
+  archived?: boolean; // 보관 상태
+  deleted?: boolean; // 삭제 상태
+  pinned?: boolean; // 고정 상태
 }
 
 // 새 노트 생성 시 사용하는 타입 (ID 제외)

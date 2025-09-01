@@ -1,8 +1,8 @@
 import { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react';
-import { useAppDispatch } from '../app/hooks';
-import { addNewNote, updateNote } from '../features/notes/notesSlice';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { addNewNote, updateNote, selectAllNotes } from '../features/notes/notesSlice';
 import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../types';
-import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
+import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA, DEFAULT_TAGS } from '../constants/noteOptions';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save } from 'lucide-react';
 import PortalModal from './PortalModal';
 
@@ -14,10 +14,12 @@ interface NoteModalProps {
   onClose: () => void;
   mode: 'create' | 'edit';
   note?: Note; // 편집 모드일 때만 전달
+  preselectedTag?: string | null; // 미리 선택된 태그
 }
 
-const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) => {
+const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, preselectedTag }) => {
   const dispatch = useAppDispatch();
+  const notes = useAppSelector(selectAllNotes);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -37,6 +39,34 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
       setBackgroundColor(note.backgroundColor);
     }
   }, [mode, note]);
+
+  // 미리 선택된 태그 처리 (생성 모드에서만)
+  useEffect(() => {
+    if (mode === 'create' && isOpen) {
+      // 'untagged'인 경우 또는 태그가 없는 경우 태그를 비워둠
+      if (preselectedTag === 'untagged' || !preselectedTag) {
+        setSelectedTags([]);
+        return;
+      }
+      
+      // 먼저 기본 태그에서 찾기
+      let foundTag = DEFAULT_TAGS.find(tag => tag.name === preselectedTag);
+      
+      // 기본 태그에 없으면 노트에서 사용 중인 태그에서 찾기
+      if (!foundTag && notes.length > 0) {
+        for (const note of notes) {
+          const noteTag = note.tags.find(tag => tag.name === preselectedTag);
+          if (noteTag) {
+            foundTag = noteTag;
+            break;
+          }
+        }
+      }
+      
+      // 찾은 태그가 있으면 설정, 없으면 빈 배열
+      setSelectedTags(foundTag ? [foundTag] : []);
+    }
+  }, [mode, preselectedTag, isOpen, notes]);
 
   // 노트 생성/수정 처리
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,13 +151,14 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
   const submitButtonIcon = isEditMode ? <Save size={16} /> : <Plus size={16} />;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 배경 오버레이 (클릭 핸들러 제거) */}
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-50"
-      />
-      
-      {/* 모달 컨텐츠 (ref 할당, onClick 핸들러 제거) */}
+    <div 
+      className="fixed inset-0 flex items-center justify-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 9999
+      }}
+    >
+      {/* 모달 컨텐츠 */}
       <div 
         ref={modalContentRef}
         className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
@@ -154,6 +185,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
             </label>
             <input
               id="title"
+              name="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -274,6 +306,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note }) =>
               <div className="flex items-center gap-2">
                 <input
                   id="backgroundColor"
+                  name="backgroundColor"
                   type="color"
                   value={backgroundColor}
                   onChange={(e) => setBackgroundColor(e.target.value)}

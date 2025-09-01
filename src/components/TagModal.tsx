@@ -113,13 +113,14 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center">
-      {/* 배경 오버레이 */}
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-50"
-        onClick={handleClose}
-      />
-      
+    <div 
+      className="fixed inset-0 flex items-center justify-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 10000
+      }}
+      onClick={handleClose}
+    >
       {/* 모달 컨텐츠 */}
       <div 
         className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
@@ -146,6 +147,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
             </label>
             <input
               id="tagSearch"
+              name="tagSearch"
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -163,6 +165,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
               </label>
               <input
                 id="newTagName"
+                name="newTagName"
                 type="text"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
@@ -176,6 +179,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
               </label>
               <input
                 id="newTagColor"
+                name="newTagColor"
                 type="color"
                 value={newTagColor}
                 onChange={(e) => setNewTagColor(e.target.value)}
