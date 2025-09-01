@@ -212,7 +212,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
         backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
       }}
     >
-      <div className="p-4 space-y-3 flex-1 flex flex-col">
+      <div className="p-3 space-y-2 flex-1 flex flex-col">
         {/* 상단: 선택 체크박스 + 제목(왼쪽) + 우선순위 + 압정아이콘(오른쪽) */}
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3 flex-1 mr-3">
@@ -228,7 +228,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
                 )}
               </button>
             )}
-            <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 flex-1">
+            <h3 className="text-base font-semibold text-gray-900 line-clamp-1 flex-1">
               {note.title}
             </h3>
           </div>
@@ -258,7 +258,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
 
         {/* 중앙: 노트 내용 */}
         <div className="text-gray-700 leading-relaxed flex-1">
-          <p className="line-clamp-3 whitespace-pre-wrap text-sm">
+          <p className="line-clamp-2 whitespace-pre-wrap text-xs">
             {note.content}
           </p>
         </div>
@@ -279,7 +279,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
         )}
 
         {/* 하단: 날짜/시간(왼쪽) + 액션 버튼들(오른쪽) */}
-        <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t border-gray-100 flex-shrink-0">
+        <div className="flex items-center justify-between text-xs text-gray-500 pt-1.5 border-t border-gray-100 flex-shrink-0">
           <div className="flex items-center space-x-1">
             <Calendar size={14} />
             <span>{formatDate(note.createdAt)} {formatTime(note.updatedAt)}</span>
@@ -290,17 +290,17 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               <>
                 <button
                   onClick={handleRestore}
-                  className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
                   title="복원"
                 >
-                  <RotateCcw size={16} />
+                  <RotateCcw size={14} />
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                   title="완전 삭제"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
                 </button>
               </>
             ) : (
@@ -308,24 +308,24 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               <>
                 <button
                   onClick={handleEdit}
-                  className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                   title="수정"
                 >
-                  <Edit size={16} />
+                  <Edit size={14} />
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                   title="삭제"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={14} />
                 </button>
                 <button
                   onClick={handleArchive}
-                  className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                   title={note.archived ? "보관 해제" : "보관"}
                 >
-                  {note.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+                  {note.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                 </button>
               </>
             )}

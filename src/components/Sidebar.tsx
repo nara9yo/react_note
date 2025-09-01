@@ -159,8 +159,23 @@ const Sidebar: React.FC<SidebarProps> = ({
             placeholder="노트의 제목을 입력해주세요."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:outline-none text-sm"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                onSearchChange('');
+                e.currentTarget.blur();
+              }
+            }}
+            className="w-full px-3 py-2 pr-10 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:outline-none text-sm"
           />
+          {searchTerm && (
+            <button
+              onClick={() => onSearchChange('')}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors duration-200"
+              aria-label="검색어 지우기"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
       </div>

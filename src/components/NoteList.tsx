@@ -310,7 +310,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
               Pinned {currentView === 'archive' ? 'Archived' : currentView === 'trash' ? 'Trash' : 'Notes'} ({pinnedNotes.length})
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {pinnedNotes.map((note: Note) => (
               <NoteCard 
                 key={note.id} 
@@ -331,7 +331,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
             {currentView === 'notes' ? 'All Notes' : currentView === 'archive' ? 'Archived Notes' : 'Trash'} 
             ({regularNotes.length})
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {regularNotes.map((note: Note) => (
               <NoteCard 
                 key={note.id} 
