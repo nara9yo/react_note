@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Note, UpdateNoteData } from '../types';
+import { useState } from 'react';
+import type { Note, UpdateNoteData } from '../types';
 import { useAppDispatch } from '../app/hooks';
 import { deleteNote, updateNote } from '../features/notes/notesSlice';
 import { Edit, Trash2, Save, X, Calendar, Clock } from 'lucide-react';

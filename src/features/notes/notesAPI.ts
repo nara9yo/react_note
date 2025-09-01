@@ -6,11 +6,10 @@ import {
   doc, 
   updateDoc,
   orderBy,
-  query,
-  serverTimestamp 
+  query
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Note, CreateNoteData, UpdateNoteData } from '../../types';
+import type { Note, CreateNoteData, UpdateNoteData } from '../../types';
 
 // Firestore 컬렉션 이름
 const COLLECTION_NAME = 'notes';

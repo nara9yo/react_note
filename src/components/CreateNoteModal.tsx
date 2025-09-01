@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppDispatch } from '../app/hooks';
 import { addNewNote } from '../features/notes/notesSlice';
-import { CreateNoteData } from '../types';
+import type { CreateNoteData } from '../types';
 import { Plus, X } from 'lucide-react';
 
 interface CreateNoteModalProps {
@@ -54,7 +54,7 @@ const CreateNoteModal: React.FC<CreateNoteModalProps> = ({ isOpen, onClose }) =>
   };
 
   // ESC 키로 모달 닫기
-  React.useEffect(() => {
+  useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         handleClose();

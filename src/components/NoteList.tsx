@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError } from '../features/notes/notesSlice';
 import NoteCard from './NoteCard';
+import type { Note } from '../types';
 import { Loader2, AlertCircle, FileText } from 'lucide-react';
 
 const NoteList: React.FC = () => {
@@ -61,7 +62,7 @@ const NoteList: React.FC = () => {
   // 노트 목록 렌더링
   return (
     <div className="space-y-6">
-      {notes.map((note) => (
+      {notes.map((note: Note) => (
         <NoteCard key={note.id} note={note} />
       ))}
     </div>

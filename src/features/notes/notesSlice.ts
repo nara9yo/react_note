@@ -1,11 +1,12 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 import { 
   fetchNotesAPI, 
   addNoteAPI, 
   deleteNoteAPI, 
   updateNoteAPI 
 } from './notesAPI';
-import { Note, CreateNoteData, UpdateNoteData, NotesState } from '../../types';
+import type { Note, CreateNoteData, UpdateNoteData, NotesState } from '../../types';
 
 // 초기 상태
 const initialState: NotesState = {
