@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './app/store';
 import NoteList from './components/NoteList';
-import CreateNoteModal from './components/CreateNoteModal';
+import NoteModal from './components/NoteModal';
 import { Plus, BookOpen } from 'lucide-react';
 
 function App() {
@@ -36,9 +36,10 @@ function App() {
         </main>
 
         {/* 노트 생성 모달 */}
-        <CreateNoteModal 
+        <NoteModal 
           isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+          onClose={() => setIsModalOpen(false)}
+          mode="create"
         />
       </div>
     </Provider>
