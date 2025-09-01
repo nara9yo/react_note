@@ -63,6 +63,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             await dispatch(updateNote({
               id: note.id,
               deleted: true
+              // pinned 상태는 trash에서도 유지
             })).unwrap();
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
@@ -91,6 +92,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
           await dispatch(updateNote({
             id: note.id,
             archived: !note.archived
+            // pinned 상태는 보관/보관해제와 무관하게 유지
           })).unwrap();
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
@@ -119,6 +121,33 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
         } catch (error) {
           console.error('노트 복원 실패:', error);
           alert('노트 복원에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  // 노트 고정/고정 해제 처리
+  const handlePin = () => {
+    const action = note.pinned ? '고정을 해제' : '고정';
+    const title = note.pinned ? '고정 해제' : '노트 고정';
+    const message = `이 노트를 ${action}하시겠습니까?`;
+    
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          await dispatch(updateNote({
+            id: note.id,
+            pinned: !note.pinned
+          })).unwrap();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 고정 상태 변경 실패:', error);
+          alert('노트 고정 상태 변경에 실패했습니다.');
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -186,7 +215,20 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(note.priority)}`}>
               {getPriorityText(note.priority)}
             </span>
-            <Pin className="w-4 h-4 text-red-500" />
+            <button
+              onClick={handlePin}
+              className={`p-1 rounded transition-colors duration-200 ${
+                note.pinned 
+                  ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
+                  : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+              }`}
+              title={note.pinned ? "고정 해제" : "고정"}
+            >
+              <Pin 
+                className="w-4 h-4" 
+                fill={note.pinned ? "currentColor" : "none"} 
+              />
+            </button>
           </div>
         </div>
 

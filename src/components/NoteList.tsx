@@ -28,16 +28,18 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   // 노트 필터링 및 정렬
   const getFilteredAndSortedNotes = () => {
     let filteredNotes = notes.filter(note => {
-      // 뷰별 필터링
-      if (currentView === 'archive' && !note.archived) return false;
+      // 뷰별 필터링 (삭제된 노트는 trash에만 표시)
+      if (currentView === 'archive' && (!note.archived || note.deleted)) return false;
       if (currentView === 'trash' && !note.deleted) return false;
       if (currentView === 'notes' && (note.archived || note.deleted)) return false;
 
-      // 태그별 필터링
-      if (selectedTag === 'untagged') {
-        return note.tags.length === 0;
-      } else if (selectedTag) {
-        return note.tags.some(tag => tag.name === selectedTag);
+      // 태그별 필터링 (trash에서는 태그 필터링 적용 안함)
+      if (currentView !== 'trash') {
+        if (selectedTag === 'untagged') {
+          return note.tags.length === 0;
+        } else if (selectedTag) {
+          return note.tags.some(tag => tag.name === selectedTag);
+        }
       }
 
       // 검색어 필터링
@@ -142,12 +144,12 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
       )}
 
       {/* 고정된 노트 섹션 */}
-      {pinnedNotes.length > 0 && currentView === 'notes' && (
+      {pinnedNotes.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Pin className="w-5 h-5 text-red-500" />
+            <Pin className="w-5 h-5 text-red-500" fill="currentColor" />
             <h2 className="text-lg font-semibold text-gray-800">
-              Pinned Notes ({pinnedNotes.length})
+              Pinned {currentView === 'archive' ? 'Archived' : currentView === 'trash' ? 'Trash' : 'Notes'} ({pinnedNotes.length})
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
