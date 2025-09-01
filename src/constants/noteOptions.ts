@@ -1,14 +1,4 @@
-import type { Tag, Priority } from '../types';
-
-// 기본 태그 옵션
-export const DEFAULT_TAGS: Tag[] = [
-  { id: '1', name: '중요', color: '#ef4444' },
-  { id: '2', name: '업무', color: '#3b82f6' },
-  { id: '3', name: '개인', color: '#10b981' },
-  { id: '4', name: '아이디어', color: '#f59e0b' },
-  { id: '5', name: '할일', color: '#8b5cf6' },
-  { id: '6', name: '메모', color: '#6b7280' },
-];
+import type { Priority } from '../types';
 
 // 우선순위 옵션
 export const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [

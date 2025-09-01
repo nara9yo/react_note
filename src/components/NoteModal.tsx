@@ -2,7 +2,7 @@ import { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { addNewNote, updateNote, selectAllNotes } from '../features/notes/notesSlice';
 import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../types';
-import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA, DEFAULT_TAGS } from '../constants/noteOptions';
+import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save } from 'lucide-react';
 import PortalModal from './PortalModal';
 
@@ -49,11 +49,9 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         return;
       }
       
-      // 먼저 기본 태그에서 찾기
-      let foundTag = DEFAULT_TAGS.find(tag => tag.name === preselectedTag);
-      
-      // 기본 태그에 없으면 노트에서 사용 중인 태그에서 찾기
-      if (!foundTag && notes.length > 0) {
+      // 노트에서 사용 중인 태그에서 찾기
+      let foundTag = undefined as undefined | Tag;
+      if (notes.length > 0) {
         for (const note of notes) {
           const noteTag = note.tags.find(tag => tag.name === preselectedTag);
           if (noteTag) {
@@ -62,7 +60,6 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           }
         }
       }
-      
       // 찾은 태그가 있으면 설정, 없으면 빈 배열
       setSelectedTags(foundTag ? [foundTag] : []);
     }
@@ -260,50 +257,51 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             )}
           </div>
 
-          {/* 우선순위 선택 */}
-          <div>
-            <span className="block text-sm font-medium text-gray-700 mb-2">
-              <Flag className="inline w-4 h-4 mr-1" />
-              우선순위
-            </span>
-            <div className="flex gap-2">
-              {PRIORITY_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setPriority(option.value)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                    priority === option.value ? 'text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  style={{ backgroundColor: priority === option.value ? option.color : undefined }}
-                >
-                  {option.label}
-                </button>
-              ))}
+          {/* 우선순위 + 배경색 (한 행 배치) */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-4">
+            {/* 우선순위 */}
+            <div className="md:w-64">
+              <span className="block text-sm font-medium text-gray-700 mb-2">
+                <Flag className="inline w-4 h-4 mr-1" />
+                우선순위
+              </span>
+              <div className="flex gap-2">
+                {PRIORITY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setPriority(option.value)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                      priority === option.value ? 'text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    style={{ backgroundColor: priority === option.value ? option.color : undefined }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 배경색 선택 */}
-          <div>
-            <label htmlFor="backgroundColor" className="block text-sm font-medium text-gray-700 mb-2">
-              <Palette className="inline w-4 h-4 mr-1" />
-              배경색
-            </label>
-            <div className="flex items-center gap-3">
-              {BACKGROUND_COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setBackgroundColor(color.value)}
-                  className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
-                    backgroundColor === color.value ? 'border-blue-500 scale-110' : 'border-gray-300 hover:border-gray-400'
-                  }`}
-                  style={{ backgroundColor: color.preview }}
-                  title={color.label}
-                />
-              ))}
-              <div className="w-px h-8 bg-gray-300 mx-2" />
+            {/* 배경색 */}
+            <div className="flex-1">
+              <label htmlFor="backgroundColor" className="block text-sm font-medium text-gray-700 mb-2">
+                <Palette className="inline w-4 h-4 mr-1" />
+                배경색
+              </label>
               <div className="flex items-center gap-2">
+                {BACKGROUND_COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => setBackgroundColor(color.value)}
+                    className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
+                      backgroundColor === color.value ? 'border-blue-500 scale-110' : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    style={{ backgroundColor: color.preview }}
+                    title={color.label}
+                  />
+                ))}
+                <div className="w-px h-8 bg-gray-300 mx-1" />
                 <input
                   id="backgroundColor"
                   name="backgroundColor"
@@ -313,7 +311,6 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                   className="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer hover:border-gray-400 transition-colors duration-200"
                   title="사용자 정의 색상"
                 />
-                <span className="text-sm text-gray-500 font-mono min-w-[70px]">{backgroundColor}</span>
               </div>
             </div>
           </div>

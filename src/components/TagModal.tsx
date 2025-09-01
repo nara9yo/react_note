@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { fetchNotes } from '../features/notes/notesSlice';
 import type { Tag } from '../types';
-import { DEFAULT_TAGS } from '../constants/noteOptions';
 import { X, Plus, Search, Tag as TagIcon } from 'lucide-react';
 
 interface TagModalProps {
@@ -32,13 +31,8 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
     return acc;
   }, [] as Tag[]);
 
-  // 기본 태그와 사용 중인 태그를 합치고 중복 제거
-  const allAvailableTags = [
-    ...DEFAULT_TAGS,
-    ...allUsedTags.filter(usedTag => 
-      !DEFAULT_TAGS.find(defaultTag => defaultTag.name === usedTag.name)
-    )
-  ];
+  // 사용 중인 태그만 표시 (기본 제공 태그 제외)
+  const allAvailableTags = allUsedTags;
 
   // 검색어에 따라 태그 필터링
   const filteredTags = allAvailableTags.filter(tag =>
@@ -169,6 +163,12 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
                 type="text"
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddNewTag();
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
                 placeholder="새 태그 이름을 입력하세요"
               />
@@ -208,7 +208,6 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
             <div className="flex flex-wrap gap-2">
               {filteredTags.map((tag) => {
                 const isSelected = selectedTags.find(t => t.id === tag.id);
-                const isCustomTag = !DEFAULT_TAGS.find(t => t.name === tag.name);
                 return (
                   <div
                     key={tag.id}
@@ -217,9 +216,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
                   >
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
                     <span className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>{tag.name}</span>
-                    {isCustomTag && (
-                      <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
-                    )}
+                    <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
                     {isSelected && (
                       <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">

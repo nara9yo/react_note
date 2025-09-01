@@ -91,6 +91,31 @@ const Sidebar: React.FC<SidebarProps> = ({
   // 삭제된 노트 개수
   const deletedNotesCount = notes.filter(note => note.deleted).length;
 
+  // Trash용 태그별 노트 개수 계산
+  const getDeletedTagCounts = () => {
+    const tagCounts: { [key: string]: number } = {};
+    const allTags: Tag[] = [];
+
+    const deletedNotes = notes.filter(note => note.deleted);
+
+    deletedNotes.forEach(note => {
+      if (note.tags.length === 0) {
+        tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
+      } else {
+        note.tags.forEach(tag => {
+          tagCounts[tag.name] = (tagCounts[tag.name] || 0) + 1;
+          if (!allTags.find(t => t.id === tag.id)) {
+            allTags.push(tag);
+          }
+        });
+      }
+    });
+
+    return { tagCounts, allTags };
+  };
+
+  const { tagCounts: deletedTagCounts, allTags: deletedAllTags } = getDeletedTagCounts();
+
   const handleTagClick = (tagName: string | null) => {
     onTagSelect(tagName);
   };
@@ -271,6 +296,47 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span className="font-medium">Trash</span>
               <span className="ml-auto text-xs text-gray-500">({deletedNotesCount})</span>
             </div>
+
+            {/* Trash의 태그별 분류 */}
+            {currentView === 'trash' && (
+              <div className="mt-3 space-y-1">
+                {/* 태그 미지정 */}
+                {deletedTagCounts['untagged'] > 0 && (
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
+                      selectedTag === 'untagged' 
+                        ? 'bg-yellow-200 text-yellow-800' 
+                        : 'hover:bg-yellow-100 text-gray-600'
+                    }`}
+                    onClick={() => handleTagClick('untagged')}
+                  >
+                    <TagIcon size={16} />
+                    <span className="text-sm">태그 미지정</span>
+                    <span className="ml-auto text-xs text-gray-500">({deletedTagCounts['untagged']})</span>
+                  </div>
+                )}
+
+                {/* 태그별 분류 */}
+                {deletedAllTags.map(tag => (
+                  <div 
+                    key={tag.id}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
+                      selectedTag === tag.name 
+                        ? 'bg-yellow-200 text-yellow-800' 
+                        : 'hover:bg-yellow-100 text-gray-600'
+                    }`}
+                    onClick={() => handleTagClick(tag.name)}
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="text-sm">{tag.name}</span>
+                    <span className="ml-auto text-xs text-gray-500">({deletedTagCounts[tag.name]})</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </nav>

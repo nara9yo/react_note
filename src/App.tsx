@@ -4,7 +4,6 @@ import { useAppSelector } from './app/hooks';
 import { store } from './app/store';
 import { selectAllNotes } from './features/notes/notesSlice';
 import { Plus, BookOpen, Menu, X, Archive, Trash2, Tag as TagIcon } from 'lucide-react';
-import { DEFAULT_TAGS } from './constants/noteOptions';
 
 // 지연 로딩을 위한 컴포넌트
 const NoteList = lazy(() => import('./components/NoteList'));
@@ -77,20 +76,15 @@ function AppContent() {
         textClass: 'text-gray-600'
       };
     } else if (selectedTag) {
-      // 기본 태그에서 먼저 찾기
-      let foundTag = DEFAULT_TAGS.find(tag => tag.name === selectedTag);
-      
-      // 기본 태그에 없으면 노트에서 사용 중인 태그에서 찾기
-      if (!foundTag) {
-        for (const note of notes) {
-          const noteTag = note.tags.find(tag => tag.name === selectedTag);
-          if (noteTag) {
-            foundTag = noteTag;
-            break;
-          }
+      // 노트에서 사용 중인 태그에서 찾기
+      let foundTag = undefined as undefined | { name: string; color: string };
+      for (const note of notes) {
+        const noteTag = note.tags.find(tag => tag.name === selectedTag);
+        if (noteTag) {
+          foundTag = noteTag;
+          break;
         }
       }
-      
       if (foundTag) {
         return {
           icon: <TagIcon size={20} style={{ color: foundTag.color }} />,
