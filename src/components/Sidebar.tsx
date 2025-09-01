@@ -31,12 +31,39 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const notes = useAppSelector(selectAllNotes);
 
-  // 태그별 노트 개수 계산
+  // 태그별 노트 개수 계산 (active notes만 포함)
   const getTagCounts = () => {
     const tagCounts: { [key: string]: number } = {};
     const allTags: Tag[] = [];
     
-    notes.forEach(note => {
+    // archive되거나 deleted된 노트 제외
+    const activeNotes = notes.filter(note => !note.archived && !note.deleted);
+    
+    activeNotes.forEach(note => {
+      if (note.tags.length === 0) {
+        tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
+      } else {
+        note.tags.forEach(tag => {
+          tagCounts[tag.name] = (tagCounts[tag.name] || 0) + 1;
+          if (!allTags.find(t => t.id === tag.id)) {
+            allTags.push(tag);
+          }
+        });
+      }
+    });
+
+    return { tagCounts, allTags };
+  };
+
+  // Archive용 태그별 노트 개수 계산
+  const getArchivedTagCounts = () => {
+    const tagCounts: { [key: string]: number } = {};
+    const allTags: Tag[] = [];
+    
+    // archived된 노트만 포함 (deleted 제외)
+    const archivedNotes = notes.filter(note => note.archived && !note.deleted);
+    
+    archivedNotes.forEach(note => {
       if (note.tags.length === 0) {
         tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
       } else {
@@ -53,12 +80,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const { tagCounts, allTags } = getTagCounts();
+  const { tagCounts: archivedTagCounts, allTags: archivedAllTags } = getArchivedTagCounts();
 
-  // 전체 노트 개수
-  const totalNotesCount = notes.length;
+  // 전체 노트 개수 (active notes만)
+  const totalNotesCount = notes.filter(note => !note.archived && !note.deleted).length;
 
   // 보관된 노트 개수
-  const archivedNotesCount = notes.filter(note => note.archived).length;
+  const archivedNotesCount = notes.filter(note => note.archived && !note.deleted).length;
 
   // 삭제된 노트 개수
   const deletedNotesCount = notes.filter(note => note.deleted).length;
@@ -176,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="p-4 border-t border-yellow-200">
             <div 
               className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-                currentView === 'archive' 
+                currentView === 'archive' && !selectedTag
                   ? 'bg-yellow-200 text-yellow-800' 
                   : 'hover:bg-yellow-100 text-gray-700'
               }`}
@@ -186,6 +214,47 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span className="font-medium">Archive</span>
               <span className="ml-auto text-sm text-gray-500">({archivedNotesCount})</span>
             </div>
+
+            {/* Archive의 태그별 분류 */}
+            {currentView === 'archive' && (
+              <div className="mt-3 space-y-1">
+                {/* 태그 미지정 */}
+                {archivedTagCounts['untagged'] > 0 && (
+                  <div 
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
+                      selectedTag === 'untagged' 
+                        ? 'bg-yellow-200 text-yellow-800' 
+                        : 'hover:bg-yellow-100 text-gray-600'
+                    }`}
+                    onClick={() => handleTagClick('untagged')}
+                  >
+                    <TagIcon size={16} />
+                    <span className="text-sm">태그 미지정</span>
+                    <span className="ml-auto text-xs text-gray-500">({archivedTagCounts['untagged']})</span>
+                  </div>
+                )}
+
+                {/* 태그별 분류 */}
+                {archivedAllTags.map(tag => (
+                  <div 
+                    key={tag.id}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
+                      selectedTag === tag.name 
+                        ? 'bg-yellow-200 text-yellow-800' 
+                        : 'hover:bg-yellow-100 text-gray-600'
+                    }`}
+                    onClick={() => handleTagClick(tag.name)}
+                  >
+                    <div 
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                    <span className="text-sm">{tag.name}</span>
+                    <span className="ml-auto text-xs text-gray-500">({archivedTagCounts[tag.name]})</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Trash 섹션 */}

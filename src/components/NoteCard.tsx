@@ -1,8 +1,9 @@
 import { useState, Suspense, lazy } from 'react';
 import type { Note } from '../types';
 import { useAppDispatch } from '../app/hooks';
-import { deleteNote } from '../features/notes/notesSlice';
-import { Edit, Trash2, Calendar, Pin, ArrowUp } from 'lucide-react';
+import { deleteNote, updateNote } from '../features/notes/notesSlice';
+import { Edit, Trash2, Calendar, Pin, Archive, ArchiveRestore, RotateCcw } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 // 지연 로딩을 위한 NoteModal
 const NoteModal = lazy(() => import('./NoteModal'));
@@ -14,16 +15,114 @@ interface NoteCardProps {
 const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
   const dispatch = useAppDispatch();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
+  // Confirm 모달 관련 상태
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'danger' | 'warning' | 'info' | 'success';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info',
+    onConfirm: () => {}
+  });
 
-  // 노트 삭제 처리
-  const handleDelete = async () => {
-    if (window.confirm('정말로 이 노트를 삭제하시겠습니까?')) {
-      try {
-        await dispatch(deleteNote(note.id)).unwrap();
-      } catch (error) {
-        console.error('노트 삭제 실패:', error);
-      }
+    // 노트 삭제 처리 (trash로 이동 또는 완전 삭제)
+  const handleDelete = () => {
+    if (note.deleted) {
+      // 이미 trash에 있는 경우 - 완전 삭제
+      setConfirmModal({
+        isOpen: true,
+        title: '완전 삭제',
+        message: '정말로 이 노트를 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+        variant: 'danger',
+        onConfirm: async () => {
+          try {
+            await dispatch(deleteNote(note.id)).unwrap();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          } catch (error) {
+            console.error('노트 완전 삭제 실패:', error);
+            alert('노트 완전 삭제에 실패했습니다.');
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        }
+      });
+    } else {
+      // 일반 노트인 경우 - trash로 이동
+      setConfirmModal({
+        isOpen: true,
+        title: '휴지통으로 이동',
+        message: '이 노트를 휴지통으로 이동하시겠습니까?',
+        variant: 'warning',
+        onConfirm: async () => {
+          try {
+            await dispatch(updateNote({
+              id: note.id,
+              deleted: true
+            })).unwrap();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          } catch (error) {
+            console.error('노트 삭제 실패:', error);
+            alert('노트 삭제에 실패했습니다.');
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        }
+      });
     }
+  };
+
+  // 노트 보관/보관 해제 처리
+  const handleArchive = () => {
+    const action = note.archived ? '보관을 해제' : '보관';
+    const title = note.archived ? '보관 해제' : '노트 보관';
+    const message = `이 노트를 ${action}하시겠습니까?`;
+    
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          await dispatch(updateNote({
+            id: note.id,
+            archived: !note.archived
+          })).unwrap();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 보관 상태 변경 실패:', error);
+          alert('노트 보관 상태 변경에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  // 노트 복원 처리 (trash에서 일반 노트로)
+  const handleRestore = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: '노트 복원',
+      message: '이 노트를 복원하시겠습니까?',
+      variant: 'success',
+      onConfirm: async () => {
+        try {
+          await dispatch(updateNote({
+            id: note.id,
+            deleted: false
+          })).unwrap();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 복원 실패:', error);
+          alert('노트 복원에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   // 편집 모달 열기
@@ -120,26 +219,50 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
             <span>{formatDate(note.createdAt)} {formatTime(note.updatedAt)}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={handleEdit}
-              className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
-              title="수정"
-            >
-              <Edit size={16} />
-            </button>
-            <button
-              onClick={handleDelete}
-              className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
-              title="삭제"
-            >
-              <Trash2 size={16} />
-            </button>
-            <button
-              className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
-              title="업로드/보관"
-            >
-              <ArrowUp size={16} />
-            </button>
+            {note.deleted ? (
+              // Trash에 있는 노트의 버튼들
+              <>
+                <button
+                  onClick={handleRestore}
+                  className="p-1.5 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
+                  title="복원"
+                >
+                  <RotateCcw size={16} />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                  title="완전 삭제"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </>
+            ) : (
+              // 일반 노트의 버튼들
+              <>
+                <button
+                  onClick={handleEdit}
+                  className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                  title="수정"
+                >
+                  <Edit size={16} />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                  title="삭제"
+                >
+                  <Trash2 size={16} />
+                </button>
+                <button
+                  onClick={handleArchive}
+                  className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                  title={note.archived ? "보관 해제" : "보관"}
+                >
+                  {note.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -153,6 +276,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note }) => {
           note={note}
         />
       </Suspense>
+
+      {/* Confirm 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

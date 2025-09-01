@@ -33,6 +33,9 @@ export const fetchNotesAPI = async (): Promise<Note[]> => {
         backgroundColor: data.backgroundColor || '#ffffff',
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+        archived: data.archived || false,
+        deleted: data.deleted || false,
+        pinned: data.pinned || false,
       });
     });
     
@@ -107,6 +110,9 @@ export const updateNoteAPI = async (noteData: UpdateNoteData): Promise<Note> => 
       backgroundColor: data.backgroundColor || '#ffffff',
       createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
       updatedAt: now,
+      archived: data.archived || false,
+      deleted: data.deleted || false,
+      pinned: data.pinned || false,
     };
   } catch (error) {
     console.error('Error updating note:', error);

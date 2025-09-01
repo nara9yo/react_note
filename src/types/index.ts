@@ -41,6 +41,9 @@ export interface UpdateNoteData {
   tags?: Tag[];
   priority?: Priority;
   backgroundColor?: string;
+  archived?: boolean;
+  deleted?: boolean;
+  pinned?: boolean;
 }
 
 // API 응답 상태
