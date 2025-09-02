@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAppDispatch, useAppSelector } from '../app/hooks';
-import { fetchNotes } from '../features/notes/notesSlice';
+import { useAppSelector } from '../app/hooks';
 import type { Tag } from '../types';
 import { X, Plus, Search, Tag as TagIcon } from 'lucide-react';
 
@@ -12,7 +11,6 @@ interface TagModalProps {
 }
 
 const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTagsChange }) => {
-  const dispatch = useAppDispatch();
   const { notes } = useAppSelector((state) => state.notes);
   const [searchTerm, setSearchTerm] = useState('');
   const [newTagName, setNewTagName] = useState('');
@@ -97,13 +95,6 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
     };
   }, [isOpen, handleClose]);
 
-  // 노트 데이터 로드
-  useEffect(() => {
-    if (isOpen) {
-      dispatch(fetchNotes());
-    }
-  }, [isOpen, dispatch]);
-
   if (!isOpen) return null;
 
   return (
@@ -113,12 +104,12 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
     >
       {/* 모달 컨텐츠 */}
       <div 
-        className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+        className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[80vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">태그 선택</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-xl font-bold text-gray-900">태그 관리</h2>
           <button
             onClick={handleClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
@@ -128,10 +119,10 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
         </div>
 
         {/* 검색 및 새 태그 입력 */}
-        <div className="p-6 border-b border-gray-200 space-y-4">
+        <div className="p-4 border-b border-gray-200 space-y-4 flex-shrink-0">
           {/* 검색 */}
           <div>
-            <label htmlFor="tagSearch" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="tagSearch" className="block text-sm font-medium text-gray-700 mb-1">
               <Search className="inline w-4 h-4 mr-1" />
               태그 검색
             </label>
@@ -142,16 +133,16 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
-              placeholder="태그 이름으로 검색하세요"
+              placeholder="태그 이름으로 검색"
             />
           </div>
 
           {/* 새 태그 추가 */}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <div className="flex-1">
-              <label htmlFor="newTagName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="newTagName" className="block text-sm font-medium text-gray-700 mb-1">
                 <Plus className="inline w-4 h-4 mr-1" />
-                새 태그 이름
+                새 태그 추가
               </label>
               <input
                 id="newTagName"
@@ -166,20 +157,17 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
-                placeholder="새 태그 이름을 입력하세요"
+                placeholder="새 태그 이름 입력"
               />
             </div>
-            <div>
-              <label htmlFor="newTagColor" className="block text-sm font-medium text-gray-700 mb-2">
-                색상
-              </label>
+            <div className="flex items-end">
               <input
                 id="newTagColor"
                 name="newTagColor"
                 type="color"
                 value={newTagColor}
                 onChange={(e) => setNewTagColor(e.target.value)}
-                className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer"
                 title="태그 색상 선택"
               />
             </div>
@@ -187,7 +175,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
               <button
                 onClick={handleAddNewTag}
                 disabled={!newTagName.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 h-10 flex items-center"
               >
                 추가
               </button>
@@ -196,10 +184,10 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
         </div>
 
         {/* 태그 목록 */}
-        <div className="p-6 max-h-96 overflow-y-auto">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">사용 가능한 태그</h3>
+        <div className="p-4 overflow-y-auto flex-1">
+          <h3 className="text-base font-medium text-gray-900 mb-3">사용 가능한 태그</h3>
           {filteredTags.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">검색 결과가 없습니다.</p>
+            <p className="text-gray-500 text-center py-8">사용 가능한 태그가 없습니다.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {filteredTags.map((tag) => {
@@ -207,7 +195,7 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
                 return (
                   <div
                     key={tag.id}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                     onClick={() => handleTagToggle(tag)}
                   >
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
@@ -227,28 +215,26 @@ const TagModal: React.FC<TagModalProps> = ({ isOpen, onClose, selectedTags, onTa
           )}
         </div>
 
-        {/* 선택된 태그 표시 */}
-        {selectedTags.length > 0 && (
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">선택된 태그</h3>
-            <div className="flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <span key={tag.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: tag.color }}>
-                  <TagIcon className="w-3 h-3 mr-1" />
-                  {tag.name}
-                  <button onClick={() => handleTagToggle(tag)} className="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full w-4 h-4 flex items-center justify-center">
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
+        {/* 선택된 태그 표시 및 완료 버튼 */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          {selectedTags.length > 0 && (
+            <div className="mb-3">
+              <h3 className="text-base font-medium text-gray-900 mb-2">선택된 태그</h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.map((tag) => (
+                  <span key={tag.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: tag.color }}>
+                    <TagIcon className="w-3 h-3 mr-1" />
+                    {tag.name}
+                    <button onClick={() => handleTagToggle(tag)} className="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full w-4 h-4 flex items-center justify-center">
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* 하단 버튼 */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50">
+          )}
           <div className="flex justify-end">
-            <button onClick={handleClose} className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200">
+            <button onClick={handleClose} className="w-full px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200">
               완료
             </button>
           </div>

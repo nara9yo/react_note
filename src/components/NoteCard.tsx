@@ -17,7 +17,7 @@ interface NoteCardProps {
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle }) => {
   const dispatch = useAppDispatch();
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{ isOpen: boolean; mode: 'view' | 'edit' }>({ isOpen: false, mode: 'view' });
   
   // Confirm 모달 관련 상태
   const [confirmModal, setConfirmModal] = useState<{
@@ -158,9 +158,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   };
 
   // 편집 모달 열기
-  const handleEdit = () => {
-    setIsEditModalOpen(true);
-  };
+  const openInViewMode = () => setModalConfig({ isOpen: true, mode: 'view' });
+  const openInEditMode = () => setModalConfig({ isOpen: true, mode: 'edit' });
 
   // 날짜 포맷팅 (이미지 형식: MM/DD/YY H:MM AM/PM)
   const formatDate = (dateString: string) => {
@@ -212,13 +211,13 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
         backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
       }}
     >
-      <div className="p-3 space-y-2 flex-1 flex flex-col">
+      <div className="p-3 space-y-2 flex-1 flex flex-col cursor-pointer" onClick={openInViewMode}>
         {/* 상단: 선택 체크박스 + 제목(왼쪽) + 우선순위 + 압정아이콘(오른쪽) */}
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3 flex-1 mr-3">
             {isSelectionMode && (
               <button
-                onClick={() => onSelectionToggle?.(note.id)}
+                onClick={(e) => { e.stopPropagation(); onSelectionToggle?.(note.id); }}
                 className="p-1 rounded transition-colors duration-200 hover:bg-gray-100"
               >
                 {isSelected ? (
@@ -237,7 +236,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               {getPriorityText(note.priority)}
             </span>
             <button
-              onClick={note.deleted ? undefined : handlePin}
+              onClick={(e) => { e.stopPropagation(); if (!note.deleted) handlePin(); }}
               disabled={note.deleted}
               className={`p-1 rounded transition-colors duration-200 ${
                 note.deleted
@@ -289,14 +288,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               // Trash에 있는 노트의 버튼들
               <>
                 <button
-                  onClick={handleRestore}
+                  onClick={(e) => { e.stopPropagation(); handleRestore(); }}
                   className="p-1 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
                   title="복원"
                 >
                   <RotateCcw size={14} />
                 </button>
                 <button
-                  onClick={handleDelete}
+                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                   className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                   title="완전 삭제"
                 >
@@ -307,21 +306,21 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               // 일반 노트의 버튼들
               <>
                 <button
-                  onClick={handleEdit}
+                  onClick={(e) => { e.stopPropagation(); openInEditMode(); }}
                   className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                   title="수정"
                 >
                   <Edit size={14} />
                 </button>
                 <button
-                  onClick={handleDelete}
+                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                   className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                   title="삭제"
                 >
                   <Trash2 size={14} />
                 </button>
                 <button
-                  onClick={handleArchive}
+                  onClick={(e) => { e.stopPropagation(); handleArchive(); }}
                   className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                   title={note.archived ? "보관 해제" : "보관"}
                 >
@@ -336,10 +335,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
       {/* 편집 모달 */}
       <Suspense fallback={null}>
         <NoteModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          mode="edit"
+          isOpen={modalConfig.isOpen}
+          onClose={() => setModalConfig({ isOpen: false, mode: 'view' })}
+          mode={modalConfig.mode}
           note={note}
+          isReadOnly={note.deleted}
         />
       </Suspense>
 
