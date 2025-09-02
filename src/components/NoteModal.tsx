@@ -126,7 +126,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
       return () => clearTimeout(timer);
     }
-  }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags]);
+  }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags, isDirty]);
 
   // 생성 모드에서 내용 변경 시 isDirty 설정
   useEffect(() => {
@@ -146,7 +146,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
       return () => clearTimeout(timer);
     }
-  }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags]);
+  }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags, isDirty]);
 
   // 미리 선택된 태그 처리 (생성 모드에서만)
   useEffect(() => {
@@ -269,7 +269,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         aria-modal="true"
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">{modalTitle}</h2>
           <button
             onClick={handleClose}

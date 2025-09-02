@@ -65,7 +65,7 @@ const TagModal: React.FC<TagModalProps> = ({
       
       loadTags();
     }
-  }, [isOpen, mode, dispatch]);
+  }, [isOpen, mode, tags, dispatch]);
 
   // 모든 태그 (Redux store + 노트에서 사용 중인 태그들 + 현재 선택된 태그들)
   const getAllTags = () => {
@@ -373,7 +373,7 @@ const TagModal: React.FC<TagModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">
             {isSelectMode ? '태그 선택' : '태그 관리'}
           </h2>
@@ -454,168 +454,171 @@ const TagModal: React.FC<TagModalProps> = ({
           </div>
         </div>
 
-        {/* 태그 목록 */}
-        <div className="p-6 overflow-y-auto flex-1 max-h-[calc(90vh-200px)] sm:max-h-[calc(90vh-200px)] max-sm:max-h-[calc(100vh-200px)]">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {isSelectMode ? '사용 가능한 태그' : '기존 태그 관리'}
-          </h3>
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-              <p className="text-gray-500 text-sm">태그를 불러오는 중...</p>
-            </div>
-          ) : filteredTags.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">사용 가능한 태그가 없습니다.</p>
-          ) : (
-            <div className={isSelectMode ? "flex flex-wrap gap-2" : "space-y-3"}>
-              {filteredTags.map((tag) => {
-                const isEditing = editingTag?.id === tag.id;
-                const isSelected = isSelectMode && selectedTags.find(t => t.id === tag.id);
+        {/* New scrollable container for tag list and footer */}
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          {/* 태그 목록 */}
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {isSelectMode ? '사용 가능한 태그' : '기존 태그 관리'}
+            </h3>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                <p className="text-gray-500 text-sm">태그를 불러오는 중...</p>
+              </div>
+            ) : filteredTags.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">사용 가능한 태그가 없습니다.</p>
+            ) : (
+              <div className={isSelectMode ? "flex flex-wrap gap-2" : "space-y-3"}>
+                {filteredTags.map((tag) => {
+                  const isEditing = editingTag?.id === tag.id;
+                  const isSelected = isSelectMode && selectedTags.find(t => t.id === tag.id);
 
-                if (isSelectMode) {
-                  // Select 모드: 태그 선택/해제 UI
-                return (
-                  <div
-                    key={tag.id}
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    onClick={() => handleTagToggle(tag)}
-                  >
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
-                      <span className={`font-medium text-sm ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
-                        {tag.name}
-                      </span>
-                    <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
-                    {isSelected && (
-                      <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                );
-                } else {
-                  // Manage 모드: 태그 편집/삭제 UI
+                  if (isSelectMode) {
+                    // Select 모드: 태그 선택/해제 UI
                   return (
                     <div
                       key={tag.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
-                        isEditing ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      onClick={() => handleTagToggle(tag)}
                     >
-                      {/* 태그 색상 */}
-                      <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
-                      
-                      {/* 태그 정보 */}
-                      <div className="flex-1 min-w-0">
-                        {isEditing ? (
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={editName}
-                              onChange={(e) => setEditName(e.target.value)}
-                              className="flex-1 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-sm"
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveEdit();
-                                if (e.key === 'Escape') handleCancelEdit();
-                              }}
-                            />
-                            <input
-                              type="color"
-                              value={editColor}
-                              onChange={(e) => setEditColor(e.target.value)}
-                              className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                              title="태그 색상 변경"
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <span className="font-medium text-gray-900">{tag.name}</span>
-                            <span className="text-sm text-gray-500 ml-2">({tag.usageCount || 0}개 노트)</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 액션 버튼들 */}
-                      <div className="flex items-center gap-2">
-                        {isEditing ? (
-                          <>
-                            <button
-                              onClick={handleSaveEdit}
-                              className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-100 rounded transition-colors duration-200"
-                              title="저장"
-                            >
-                              <Check size={16} />
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
-                              title="취소"
-                            >
-                              <X size={16} />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleStartEdit(tag)}
-                              className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors duration-200"
-                              title="편집"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTag(tag)}
-                              className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded transition-colors duration-200"
-                              title="삭제"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </>
-                        )}
-                      </div>
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+                        <span className={`font-medium text-sm ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
+                          {tag.name}
+                        </span>
+                      <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
+                      {isSelected && (
+                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   );
-                }
-              })}
-            </div>
-          )}
-        </div>
+                  } else {
+                    // Manage 모드: 태그 편집/삭제 UI
+                    return (
+                      <div
+                        key={tag.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
+                          isEditing ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {/* 태그 색상 */}
+                        <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
 
-        {/* 하단 영역 */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-          {isSelectMode && selectedTags.length > 0 && (
-            <div className="mb-3">
-              <h3 className="text-base font-medium text-gray-900 mb-2">선택된 태그</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedTags.map((tag) => (
-                  <span key={tag.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: tag.color }}>
-                    <TagIcon className="w-3 h-3 mr-1" />
-                    {tag.name}
-                    <button 
-                      onClick={() => handleTagToggle(tag)} 
-                      className="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full w-4 h-4 flex items-center justify-center"
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
+                        {/* 태그 정보 */}
+                        <div className="flex-1 min-w-0">
+                          {isEditing ? (
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-sm"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveEdit();
+                                  if (e.key === 'Escape') handleCancelEdit();
+                                }}
+                              />
+                              <input
+                                type="color"
+                                value={editColor}
+                                onChange={(e) => setEditColor(e.target.value)}
+                                className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+                                title="태그 색상 변경"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="font-medium text-gray-900">{tag.name}</span>
+                              <span className="text-sm text-gray-500 ml-2">({tag.usageCount || 0}개 노트)</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 액션 버튼들 */}
+                        <div className="flex items-center gap-2">
+                          {isEditing ? (
+                            <>
+                              <button
+                                onClick={handleSaveEdit}
+                                className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-100 rounded transition-colors duration-200"
+                                title="저장"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
+                                title="취소"
+                              >
+                                <X size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleStartEdit(tag)}
+                                className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors duration-200"
+                                title="편집"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTag(tag)}
+                                className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded transition-colors duration-200"
+                                title="삭제"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
               </div>
+            )}
+          </div>
+
+          {/* 하단 영역 */}
+          <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+            {isSelectMode && selectedTags.length > 0 && (
+              <div className="mb-3">
+                <h3 className="text-base font-medium text-gray-900 mb-2">선택된 태그</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedTags.map((tag) => (
+                    <span key={tag.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: tag.color }}>
+                      <TagIcon className="w-3 h-3 mr-1" />
+                      {tag.name}
+                      <button
+                        onClick={() => handleTagToggle(tag)}
+                        className="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full w-4 h-4 flex items-center justify-center"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button
+                onClick={handleClose}
+                className={`px-6 py-2 rounded-lg transition-colors duration-200 ${
+                  isSelectMode
+                    ? 'w-full bg-gray-600 text-white hover:bg-gray-700'
+                    : 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                {isSelectMode ? '완료' : '완료'}
+              </button>
             </div>
-          )}
-          <div className="flex justify-end">
-            <button 
-              onClick={handleClose} 
-              className={`px-6 py-2 rounded-lg transition-colors duration-200 ${
-                isSelectMode 
-                  ? 'w-full bg-gray-600 text-white hover:bg-gray-700' 
-                  : 'bg-gray-600 text-white hover:bg-gray-700'
-              }`}
-            >
-              {isSelectMode ? '완료' : '완료'}
-            </button>
           </div>
         </div>
       </div>
