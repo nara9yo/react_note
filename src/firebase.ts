@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import i18n from './i18n';
 
 // Firebase 설정 (Vite 환경 변수에서 가져옴)
 const firebaseConfig = {
@@ -13,7 +14,7 @@ const firebaseConfig = {
 
 // 환경 변수 검증
 if (!firebaseConfig.projectId || firebaseConfig.projectId === '') {
-  console.error('Firebase Project ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.');
+  console.error(i18n.t('error.firebaseProjectIdMissing'));
 }
 
 // Firebase 앱 초기화

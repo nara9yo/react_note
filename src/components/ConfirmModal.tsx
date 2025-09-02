@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle, Info, Trash2 } from 'lucide-react';
+import { useLanguage } from '../app/hooks/useLanguage';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -17,13 +18,18 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
   title,
   message,
-  confirmText = '확인',
-  cancelText = '취소',
+  confirmText,
+  cancelText,
   variant = 'info',
   type = 'confirm', // 기본값은 confirm
   onConfirm,
   onCancel
 }) => {
+  const { t } = useLanguage();
+
+  // 기본값을 다국어 키로 설정
+  const finalConfirmText = confirmText || t('button.confirm');
+  const finalCancelText = cancelText || t('button.cancel');
   if (!isOpen) return null;
 
   const getVariantStyles = () => {
@@ -62,11 +68,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const styles = getVariantStyles();
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10001"
       onClick={type === 'confirm' ? onCancel : undefined}
     >
-      <div 
+      <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
@@ -98,14 +104,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
               onClick={onCancel}
               className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
             >
-              {cancelText}
+              {finalCancelText}
             </button>
           )}
           <button
             onClick={onConfirm}
             className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmButton}`}
           >
-            {confirmText}
+            {finalConfirmText}
           </button>
         </div>
       </div>

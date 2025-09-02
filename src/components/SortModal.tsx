@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { useLanguage } from '../app/hooks/useLanguage';
 import type { SortOptions, PrioritySortOrder, DateSortOrder } from '../types';
 
 interface SortModalProps {
@@ -15,6 +16,7 @@ const SortModal: React.FC<SortModalProps> = ({
   sortOptions,
   onSortOptionsChange
 }) => {
+  const { t } = useLanguage();
   if (!isOpen) return null;
 
   const handlePriorityChange = (order: PrioritySortOrder | null) => {
@@ -39,17 +41,17 @@ const SortModal: React.FC<SortModalProps> = ({
   };
 
   const getPriorityLabel = (priority: PrioritySortOrder) => {
-    return priority === 'low-to-high' ? '낮음 → 높음' : '높음 → 낮음';
+    return priority === 'low-to-high' ? t('sort.priority.lowToHigh') : t('sort.priority.highToLow');
   };
 
   const getDateLabel = (date: DateSortOrder) => {
     switch (date) {
       case 'created':
-        return '생성일 기준';
+        return t('sort.date.created');
       case 'edited':
-        return '수정일 기준';
+        return t('sort.date.edited');
       default:
-        return '생성일 기준';
+        return t('sort.date.created');
     }
   };
 
@@ -58,7 +60,7 @@ const SortModal: React.FC<SortModalProps> = ({
       <div className="bg-white rounded-lg p-6 w-96 max-w-[90vw] shadow-xl">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">정렬</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('menu.sort')}</h2>
           <div className="flex items-center gap-3">
             <button
               onClick={handleClear}
@@ -77,7 +79,7 @@ const SortModal: React.FC<SortModalProps> = ({
 
         {/* 우선순위 정렬 */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">우선순위:</h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">{t('sort.priority')}:</h3>
           <div className="space-y-2">
             {(['low-to-high', 'high-to-low'] as const).map((order) => (
               <label key={order} className="flex items-center gap-3 cursor-pointer">
@@ -96,7 +98,7 @@ const SortModal: React.FC<SortModalProps> = ({
 
         {/* 날짜 정렬 */}
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">날짜:</h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">{t('sort.date')}:</h3>
           <div className="space-y-2">
             {(['created', 'edited'] as const).map((order) => (
               <label key={order} className="flex items-center gap-3 cursor-pointer">

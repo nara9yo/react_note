@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
+import i18n from '../../i18n';
 import type { Tag } from '../../types';
 
 // Firebase 컬렉션 이름
@@ -28,11 +29,11 @@ export const fetchTags = createAsyncThunk(
     try {
       const tagsCollection = collection(db, TAGS_COLLECTION);
       const querySnapshot = await getDocs(tagsCollection);
-      
+
       if (querySnapshot.empty) {
         return [];
       }
-      
+
       const tags: Tag[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -45,10 +46,10 @@ export const fetchTags = createAsyncThunk(
           updatedAt: data.updatedAt,
         });
       });
-      
+
       return tags;
     } catch (error) {
-      console.error('태그 목록 가져오기 중 오류 발생:', error);
+      console.error(i18n.t('message.loadTagsFailed'), error);
       // 오류 발생 시 빈 배열 반환
       return [];
     }
@@ -65,9 +66,9 @@ export const addTag = createAsyncThunk(
       createdAt: now,
       updatedAt: now,
     };
-    
+
     const docRef = await addDoc(collection(db, TAGS_COLLECTION), tagData);
-    
+
     return {
       id: docRef.id,
       ...tagData,
@@ -84,10 +85,10 @@ export const updateTag = createAsyncThunk(
       ...tag,
       updatedAt: now,
     };
-    
+
     const tagRef = doc(db, TAGS_COLLECTION, tag.id);
     await updateDoc(tagRef, updateData);
-    
+
     return {
       ...tag,
       updatedAt: now,
@@ -101,7 +102,7 @@ export const deleteTag = createAsyncThunk(
   async (tagId: string) => {
     const tagRef = doc(db, TAGS_COLLECTION, tagId);
     await deleteDoc(tagRef);
-    
+
     return tagId;
   }
 );
@@ -115,10 +116,10 @@ export const updateTagUsageCount = createAsyncThunk(
       collection(db, 'notes'),
       where('tags', 'array-contains', { id: tagId })
     );
-    
+
     const notesSnapshot = await getDocs(notesQuery);
     let usageCount = 0;
-    
+
     notesSnapshot.forEach((doc) => {
       const note = doc.data();
       // 삭제되지 않고 보관되지 않은 노트만 카운트
@@ -126,14 +127,14 @@ export const updateTagUsageCount = createAsyncThunk(
         usageCount++;
       }
     });
-    
+
     // 태그 사용량 업데이트
     const tagRef = doc(db, TAGS_COLLECTION, tagId);
-    await updateDoc(tagRef, { 
+    await updateDoc(tagRef, {
       usageCount,
       updatedAt: new Date().toISOString()
     });
-    
+
     return { tagId, usageCount };
   }
 );
@@ -146,7 +147,7 @@ export const updateAllTagsUsageCount = createAsyncThunk(
       // 모든 노트를 가져와서 태그별 사용량 계산
       const notesSnapshot = await getDocs(collection(db, 'notes'));
       const tagUsageMap = new Map<string, number>();
-      
+
       notesSnapshot.forEach((doc) => {
         const note = doc.data();
         // 삭제되지 않고 보관되지 않은 노트만 카운트
@@ -156,7 +157,7 @@ export const updateAllTagsUsageCount = createAsyncThunk(
           });
         }
       });
-      
+
       // 태그 컬렉션이 비어있는지 확인
       let tagsSnapshot;
       try {
@@ -164,38 +165,37 @@ export const updateAllTagsUsageCount = createAsyncThunk(
       } catch (queryError) {
         // BloomFilter 오류나 기타 쿼리 오류 처리
         if (queryError instanceof Error && queryError.name === 'BloomFilterError') {
-          console.warn('BloomFilter 오류 발생 - 태그 사용량 업데이트 건너뜀');
+          console.warn(i18n.t('warn.bloomFilterSkip'));
           return [];
         }
         throw queryError; // 다른 오류는 다시 던지기
       }
-      
+
       // 태그가 없으면 빈 배열 반환
       if (tagsSnapshot.empty) {
         return [];
       }
-      
+
       const updatePromises = tagsSnapshot.docs.map(async (doc) => {
         const tagId = doc.id;
         const usageCount = tagUsageMap.get(tagId) || 0;
-        
+
         await updateDoc(doc.ref, {
           usageCount,
           updatedAt: new Date().toISOString()
         });
-        
+
         return { tagId, usageCount };
       });
-      
+
       const results = await Promise.all(updatePromises);
       return results;
     } catch (error) {
       // BloomFilter 오류나 기타 Firestore 오류 처리
-      if (error instanceof Error && error.name === 'BloomFilterError') {
-        console.warn('BloomFilter 오류 발생 - 태그 사용량 업데이트 건너뜀:', error);
-        return [];
+      if (error instanceof Error && error.name !== 'BloomFilterError') {
+        // fallthrough
       }
-      console.error('태그 사용량 업데이트 중 오류 발생:', error);
+      console.error(i18n.t('error.tagUsageUpdateFailed'), error);
       // 오류 발생 시 빈 배열 반환하여 앱이 중단되지 않도록 함
       return [];
     }
@@ -213,7 +213,7 @@ const tagsSlice = createSlice({
     addLocalTag: (state, action: PayloadAction<Tag>) => {
       state.tags.push(action.payload);
     },
-    
+
     // 로컬에서 태그 업데이트 (임시)
     updateLocalTag: (state, action: PayloadAction<Partial<Tag> & { id: string }>) => {
       const index = state.tags.findIndex(tag => tag.id === action.payload.id);
@@ -221,12 +221,12 @@ const tagsSlice = createSlice({
         state.tags[index] = { ...state.tags[index], ...action.payload };
       }
     },
-    
+
     // 로컬에서 태그 삭제 (임시)
     deleteLocalTag: (state, action: PayloadAction<string>) => {
       state.tags = state.tags.filter(tag => tag.id !== action.payload);
     },
-    
+
     // 에러 초기화
     clearError: (state) => {
       state.error = null;
@@ -245,14 +245,14 @@ const tagsSlice = createSlice({
       })
       .addCase(fetchTags.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || '태그를 불러오는데 실패했습니다.';
+        state.error = action.error.message || i18n.t('message.loadTagsFailed');
       })
-      
+
       // addTag
       .addCase(addTag.fulfilled, (state, action) => {
         state.tags.push(action.payload);
       })
-      
+
       // updateTag
       .addCase(updateTag.fulfilled, (state, action) => {
         const index = state.tags.findIndex(tag => tag.id === action.payload.id);
@@ -260,38 +260,38 @@ const tagsSlice = createSlice({
           state.tags[index] = { ...state.tags[index], ...action.payload };
         }
       })
-      
+
       // deleteTag
       .addCase(deleteTag.fulfilled, (state, action) => {
         state.tags = state.tags.filter(tag => tag.id !== action.payload);
       })
-      
-             // updateTagUsageCount
-       .addCase(updateTagUsageCount.fulfilled, (state, action) => {
-         const index = state.tags.findIndex(tag => tag.id === action.payload.tagId);
-         if (index !== -1) {
-           state.tags[index].usageCount = action.payload.usageCount;
-         }
-       })
-       
-               // updateAllTagsUsageCount
-        .addCase(updateAllTagsUsageCount.fulfilled, (state, action) => {
-          action.payload.forEach(({ tagId, usageCount }) => {
-            const index = state.tags.findIndex(tag => tag.id === tagId);
-            if (index !== -1) {
-              state.tags[index].usageCount = usageCount;
-            }
-          });
-        })
+
+      // updateTagUsageCount
+      .addCase(updateTagUsageCount.fulfilled, (state, action) => {
+        const index = state.tags.findIndex(tag => tag.id === action.payload.tagId);
+        if (index !== -1) {
+          state.tags[index].usageCount = action.payload.usageCount;
+        }
+      })
+
+      // updateAllTagsUsageCount
+      .addCase(updateAllTagsUsageCount.fulfilled, (state, action) => {
+        action.payload.forEach(({ tagId, usageCount }) => {
+          const index = state.tags.findIndex(tag => tag.id === tagId);
+          if (index !== -1) {
+            state.tags[index].usageCount = usageCount;
+          }
+        });
+      })
 
   },
 });
 
-export const { 
-  addLocalTag, 
-  updateLocalTag, 
-  deleteLocalTag, 
-  clearError 
+export const {
+  addLocalTag,
+  updateLocalTag,
+  deleteLocalTag,
+  clearError
 } = tagsSlice.actions;
 
 export default tagsSlice.reducer;

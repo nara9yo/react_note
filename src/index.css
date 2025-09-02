@@ -11,15 +11,15 @@
   --color-text-secondary: #374151;
   --color-background: #f9fafb;
   --color-border: #e5e7eb;
-  
+
   /* 태그 기본 색상 */
   --color-tag-default: #3b82f6;
-  
+
   /* 우선순위 색상 */
   --color-priority-low: #10b981;
   --color-priority-medium: #f59e0b;
   --color-priority-high: #ef4444;
-  
+
   /* 배경색 옵션 */
   --color-bg-white: #ffffff;
   --color-bg-yellow: #fef3c7;
@@ -29,10 +29,10 @@
   --color-bg-purple: #f3e8ff;
   --color-bg-red: #fef2f2;
   --color-bg-light-yellow: #fefce8;
-  
+
   /* 선택 상태 색상 */
   --color-selection: #eff6ff;
-  
+
   /* 인터랙션 색상 */
   --color-blue-50: #eff6ff;
   --color-blue-100: #dbeafe;
@@ -41,7 +41,7 @@
   --color-blue-600: #2563eb;
   --color-blue-700: #1d4ed8;
   --color-blue-900: #1e3a8a;
-  
+
   /* 회색 색상 */
   --color-gray-100: #f3f4f6;
   --color-gray-200: #e5e7eb;
@@ -95,12 +95,15 @@ body {
 
 /* 스크롤바 숨기기 */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* 드롭다운 색상 옵션 스타일 */

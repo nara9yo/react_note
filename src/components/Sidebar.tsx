@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useAppSelector } from '../app/hooks';
+import { useLanguage } from '../app/hooks/useLanguage';
 import { selectAllNotes } from '../features/notes/notesSlice';
 import type { Tag } from '../types';
 import {
@@ -32,15 +33,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   onTagManagementOpen
 }) => {
   const notes = useAppSelector(selectAllNotes);
+  const { t } = useLanguage();
 
   // 태그별 노트 개수 계산 (active notes만 포함)
   const getTagCounts = () => {
     const tagCounts: { [key: string]: number } = {};
     const allTags: Tag[] = [];
-    
+
     // archive되거나 deleted된 노트 제외
     const activeNotes = notes.filter(note => !note.archived && !note.deleted);
-    
+
     activeNotes.forEach(note => {
       if (note.tags.length === 0) {
         tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
@@ -61,10 +63,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const getArchivedTagCounts = () => {
     const tagCounts: { [key: string]: number } = {};
     const allTags: Tag[] = [];
-    
+
     // archived된 노트만 포함 (deleted 제외)
     const archivedNotes = notes.filter(note => note.archived && !note.deleted);
-    
+
     archivedNotes.forEach(note => {
       if (note.tags.length === 0) {
         tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
@@ -129,6 +131,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
 
 
+  const LanguageSelector = lazy(() => import('./LanguageSelector'));
+
   return (
     <div className="w-64 bg-yellow-50 border-r border-yellow-200 h-full flex flex-col">
       {/* 헤더 */}
@@ -141,7 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-yellow-100 transition-colors duration-200 md:hidden"
-            aria-label="사이드바 닫기"
+            aria-label={t('aria.closeSidebar')}
           >
             <X size={20} />
           </button>
@@ -152,13 +156,13 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-b border-yellow-200 space-y-3">
         <div className="relative">
           <label htmlFor="search-notes" className="sr-only">
-            노트 검색
+            {t('menu.search')}
           </label>
           <input
             id="search-notes"
             name="search-notes"
             type="text"
-            placeholder="노트의 제목을 입력해주세요."
+            placeholder={t('search.placeholder')}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             onKeyDown={(e) => {
@@ -173,7 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => onSearchChange('')}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors duration-200"
-              aria-label="검색어 지우기"
+              aria-label={t('aria.clearSearch')}
             >
               <X size={16} />
             </button>
@@ -187,16 +191,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-full overflow-y-auto">
           {/* Notes 섹션 */}
           <div className="p-4">
-            <div 
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-                currentView === 'notes' && !selectedTag 
-                  ? 'bg-yellow-200 text-yellow-800' 
-                  : 'hover:bg-yellow-100 text-gray-700'
-              }`}
+            <div
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${currentView === 'notes' && !selectedTag
+                ? 'bg-yellow-200 text-yellow-800'
+                : 'hover:bg-yellow-100 text-gray-700'
+                }`}
               onClick={() => handleViewChange('notes')}
             >
               <BookOpen size={20} />
-              <span className="font-medium">Notes</span>
+              <span className="font-medium">{t('menu.notes')}</span>
               <span className="ml-auto text-sm text-gray-500">({totalNotesCount})</span>
             </div>
 
@@ -205,32 +208,30 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-3 space-y-1">
                 {/* 태그 미지정 */}
                 {tagCounts['untagged'] > 0 && (
-                  <div 
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
-                      selectedTag === 'untagged' 
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                  <div
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === 'untagged'
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick('untagged')}
                   >
                     <TagIcon size={16} />
-                    <span className="text-sm">태그 미지정</span>
+                    <span className="text-sm">{t('message.untagged')}</span>
                     <span className="ml-auto text-xs text-gray-500">({tagCounts['untagged']})</span>
                   </div>
                 )}
 
                 {/* 태그별 분류 */}
                 {allTags.map(tag => (
-                  <div 
+                  <div
                     key={tag.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
-                      selectedTag === tag.name 
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === tag.name
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick(tag.name)}
                   >
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
@@ -249,22 +250,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-100 text-gray-700 transition-colors duration-200"
             >
               <TagIcon size={20} />
-              <span className="font-medium">태그 관리</span>
+              <span className="font-medium">{t('menu.tagManagement')}</span>
             </button>
           </div>
 
           {/* Archive 섹션 */}
           <div className="p-4 border-t border-yellow-200">
-            <div 
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-                currentView === 'archive' && !selectedTag
-                  ? 'bg-yellow-200 text-yellow-800' 
-                  : 'hover:bg-yellow-100 text-gray-700'
-              }`}
+            <div
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${currentView === 'archive' && !selectedTag
+                ? 'bg-yellow-200 text-yellow-800'
+                : 'hover:bg-yellow-100 text-gray-700'
+                }`}
               onClick={() => handleViewChange('archive')}
             >
               <Archive size={20} />
-              <span className="font-medium">Archive</span>
+              <span className="font-medium">{t('menu.archive')}</span>
               <span className="ml-auto text-sm text-gray-500">({archivedNotesCount})</span>
             </div>
 
@@ -273,32 +273,30 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-3 space-y-1">
                 {/* 태그 미지정 */}
                 {archivedTagCounts['untagged'] > 0 && (
-                  <div 
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
-                      selectedTag === 'untagged' 
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                  <div
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === 'untagged'
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick('untagged')}
                   >
                     <TagIcon size={16} />
-                    <span className="text-sm">태그 미지정</span>
+                    <span className="text-sm">{t('message.untagged')}</span>
                     <span className="ml-auto text-xs text-gray-500">({archivedTagCounts['untagged']})</span>
                   </div>
                 )}
 
                 {/* 태그별 분류 */}
                 {archivedAllTags.map(tag => (
-                  <div 
+                  <div
                     key={tag.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
-                      selectedTag === tag.name 
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === tag.name
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick(tag.name)}
                   >
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
@@ -312,16 +310,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Trash 섹션 */}
           <div className="p-4 border-t border-yellow-200">
-            <div 
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-                currentView === 'trash' 
-                  ? 'bg-yellow-200 text-yellow-800' 
-                  : 'hover:bg-yellow-100 text-gray-700'
-              }`}
+            <div
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${currentView === 'trash'
+                ? 'bg-yellow-200 text-yellow-800'
+                : 'hover:bg-yellow-100 text-gray-700'
+                }`}
               onClick={() => handleViewChange('trash')}
             >
               <Trash2 size={20} />
-              <span className="font-medium">Trash</span>
+              <span className="font-medium">{t('menu.trash')}</span>
               <span className="ml-auto text-xs text-gray-500">({deletedNotesCount})</span>
             </div>
 
@@ -330,32 +327,30 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-3 space-y-1">
                 {/* 태그 미지정 */}
                 {deletedTagCounts['untagged'] > 0 && (
-                  <div 
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
-                      selectedTag === 'untagged' 
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                  <div
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === 'untagged'
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick('untagged')}
                   >
                     <TagIcon size={16} />
-                    <span className="text-sm">태그 미지정</span>
+                    <span className="text-sm">{t('message.untagged')}</span>
                     <span className="ml-auto text-xs text-gray-500">({deletedTagCounts['untagged']})</span>
                   </div>
                 )}
 
                 {/* 태그별 분류 */}
                 {deletedAllTags.map(tag => (
-                  <div 
+                  <div
                     key={tag.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${
-                      selectedTag === tag.name 
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === tag.name
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick(tag.name)}
                   >
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
@@ -368,6 +363,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
       </nav>
+
+      {/* 하단 언어 선택 */}
+      <div className="p-4 border-t border-yellow-200">
+        <Suspense fallback={null}>
+          <LanguageSelector />
+        </Suspense>
+      </div>
     </div>
   );
 };

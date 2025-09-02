@@ -5,16 +5,19 @@ import { store } from './app/store';
 import { selectAllNotes } from './features/notes/notesSlice';
 import { fetchTags, updateAllTagsUsageCount } from './features/tags/tagsSlice';
 import { Plus, BookOpen, Menu, X, Archive, Trash2, Tag as TagIcon } from 'lucide-react';
+import { useLanguage } from './app/hooks/useLanguage';
 
 // 지연 로딩을 위한 컴포넌트
 const NoteList = lazy(() => import('./components/NoteList'));
 const NoteModal = lazy(() => import('./components/NoteModal'));
 const Sidebar = lazy(() => import('./components/Sidebar'));
 const TagModal = lazy(() => import('./components/TagModal'));
+// const LanguageSelector = lazy(() => import('./components/LanguageSelector'));
 
 function AppContent() {
   const dispatch = useAppDispatch();
   const notes = useAppSelector(selectAllNotes);
+  const { t } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagManagementOpen, setIsTagManagementOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -37,9 +40,9 @@ function AppContent() {
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
-    
+
     return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  }, [t]);
 
   // 앱 시작 시 태그 로드 및 사용량 업데이트
   useEffect(() => {
@@ -47,17 +50,17 @@ function AppContent() {
       try {
         // 태그 로드
         await dispatch(fetchTags()).unwrap();
-        
+
         // 태그 사용량 업데이트
         await dispatch(updateAllTagsUsageCount()).unwrap();
       } catch (error) {
-        console.error('태그 초기화 실패:', error);
+        console.error(t('error.tagInitFailed'), error);
         // 오류가 발생해도 앱은 계속 실행
       }
     };
 
     initializeTags();
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   const handleTagSelect = (tag: string | null) => {
     setSelectedTag(tag);
@@ -94,7 +97,7 @@ function AppContent() {
     if (selectedTag === 'untagged') {
       return {
         icon: <TagIcon size={20} className="text-gray-600" />,
-        title: '태그 미지정',
+        title: t('message.untagged'),
         textClass: 'text-gray-600'
       };
     } else if (selectedTag) {
@@ -116,47 +119,47 @@ function AppContent() {
       }
     }
 
-          // 기본 뷰 (Notes, Archive, Trash)
-      switch (currentView) {
-        case 'archive':
-          return {
-            icon: <Archive size={20} className="text-gray-600" />,
-            title: 'Archive',
-            textClass: 'text-gray-600'
-          };
-        case 'trash':
-          return {
-            icon: <Trash2 size={20} className="text-gray-600" />,
-            title: 'Trash',
-            textClass: 'text-gray-600'
-          };
-        default:
-          return {
-            icon: <BookOpen size={20} className="text-gray-600" />,
-            title: 'Notes',
-            textClass: 'text-gray-600'
-          };
-      }
+    // 기본 뷰 (Notes, Archive, Trash)
+    switch (currentView) {
+      case 'archive':
+        return {
+          icon: <Archive size={20} className="text-gray-600" />,
+          title: t('menu.archive'),
+          textClass: 'text-gray-600'
+        };
+      case 'trash':
+        return {
+          icon: <Trash2 size={20} className="text-gray-600" />,
+          title: t('menu.trash'),
+          textClass: 'text-gray-600'
+        };
+      default:
+        return {
+          icon: <BookOpen size={20} className="text-gray-600" />,
+          title: t('menu.notes'),
+          textClass: 'text-gray-600'
+        };
+    }
   };
 
   const currentMenu = getCurrentMenuInfo();
 
   return (
     <div className="min-h-screen bg-gray-50">
-        {/* 메인 컨텐츠 영역 */}
-        <div className="flex h-screen">
-          {/* 사이드바 */}
-          <Suspense fallback={
-            <div className="w-64 bg-yellow-50 border-r border-yellow-200 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
-            </div>
-          }>
-            <div className={`
+      {/* 메인 컨텐츠 영역 */}
+      <div className="flex h-screen">
+        {/* 사이드바 */}
+        <Suspense fallback={
+          <div className="w-64 bg-yellow-50 border-r border-yellow-200 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
+          </div>
+        }>
+          <div className={`
               ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
               ${isMobile ? 'fixed inset-y-0 left-0 z-50' : 'relative'}
               transition-transform duration-300 ease-in-out
             `}>
-                          <Sidebar
+            <Sidebar
               selectedTag={selectedTag}
               onTagSelect={handleTagSelect}
               onViewChange={handleViewChange}
@@ -166,92 +169,93 @@ function AppContent() {
               onClose={closeSidebar}
               onTagManagementOpen={() => setIsTagManagementOpen(true)}
             />
-            </div>
-          </Suspense>
+          </div>
+        </Suspense>
 
-          {/* 모바일에서 사이드바가 열려있을 때 오버레이 */}
-          {isMobile && isSidebarOpen && (
-            <div 
-              className="fixed inset-0 z-40 md:hidden backdrop-blur-xs"
-              onClick={closeSidebar}
-            />
-          )}
+        {/* 모바일에서 사이드바가 열려있을 때 오버레이 */}
+        {isMobile && isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 md:hidden backdrop-blur-xs"
+            onClick={closeSidebar}
+          />
+        )}
 
-          {/* 메인 콘텐츠 */}
-          <main className={`flex-1 flex flex-col transition-all duration-300 ${
-            isMobile && isSidebarOpen ? 'ml-0' : ''
+        {/* 메인 콘텐츠 */}
+        <main className={`flex-1 flex flex-col transition-all duration-300 ${isMobile && isSidebarOpen ? 'ml-0' : ''
           }`}>
-            {/* 헤더 */}
-            <header className="bg-white shadow-sm border-b border-gray-200">
-              <div className="px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
+          {/* 헤더 */}
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                <div className="flex items-center space-x-3">
+                  {/* 모바일 사이드바 토글 버튼 */}
+                  <button
+                    onClick={toggleSidebar}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 md:hidden"
+                    aria-label={t('aria.toggleSidebar')}
+                  >
+                    {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+                  </button>
+
+                  {/* 현재 선택된 메뉴 표시 */}
                   <div className="flex items-center space-x-3">
-                    {/* 모바일 사이드바 토글 버튼 */}
-                    <button
-                      onClick={toggleSidebar}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 md:hidden"
-                      aria-label="사이드바 토글"
+                    {currentMenu.icon}
+                    <h1
+                      className={`text-2xl font-bold ${currentMenu.textClass || ''}`}
+                      style={currentMenu.color ? { color: currentMenu.color } : {}}
                     >
-                      {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-                    </button>
-                    
-                    {/* 현재 선택된 메뉴 표시 */}
-                    <div className="flex items-center space-x-3">
-                      {currentMenu.icon}
-                      <h1 
-                        className={`text-2xl font-bold ${currentMenu.textClass || ''}`}
-                        style={currentMenu.color ? { color: currentMenu.color } : {}}
-                      >
-                        {currentMenu.title}
-                      </h1>
-                    </div>
+                      {currentMenu.title}
+                    </h1>
                   </div>
+                </div>
+                <div className="flex items-center space-x-4">
                   <button
                     onClick={() => setIsModalOpen(true)}
                     className="btn-primary flex items-center space-x-2"
                   >
                     <Plus size={20} />
-                    <span>새 노트</span>
+                    <span>{t('menu.newNote')}</span>
                   </button>
                 </div>
               </div>
-            </header>
-
-            {/* 노트 리스트 */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              <Suspense fallback={
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue"></div>
-                </div>
-              }>
-                <NoteList
-                  selectedTag={selectedTag}
-                  currentView={currentView}
-                  searchTerm={searchTerm}
-                />
-              </Suspense>
             </div>
-          </main>
-        </div>
+          </header>
 
-        {/* 노트 생성 모달 */}
-        <Suspense fallback={null}>
-          <NoteModal 
-            isOpen={isModalOpen} 
-            onClose={() => setIsModalOpen(false)}
-            mode="create"
-            preselectedTag={selectedTag}
-          />
-        </Suspense>
+          {/* 노트 리스트 */}
+          <div className="flex-1 p-6 overflow-y-auto">
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue"></div>
+              </div>
+            }>
+              <NoteList
+                selectedTag={selectedTag}
+                currentView={currentView}
+                searchTerm={searchTerm}
+              />
+            </Suspense>
+          </div>
+        </main>
+      </div>
 
-        {/* 태그 관리 모달 */}
-        <Suspense fallback={null}>
-          <TagModal
-            isOpen={isTagManagementOpen}
-            onClose={() => setIsTagManagementOpen(false)}
-            mode="manage"
-          />
-        </Suspense>
+      {/* 노트 생성 모달 */}
+      <Suspense fallback={null}>
+        <NoteModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          mode="create"
+          preselectedTag={selectedTag}
+        />
+      </Suspense>
+
+      {/* 태그 관리 모달 */}
+      <Suspense fallback={null}>
+        <TagModal
+          isOpen={isTagManagementOpen}
+          onClose={() => setIsTagManagementOpen(false)}
+          mode="manage"
+        />
+      </Suspense>
     </div>
   );
 }

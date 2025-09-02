@@ -1,8 +1,9 @@
 import { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { useLanguage } from '../app/hooks/useLanguage';
 import { addNewNote, updateNote, selectAllNotes } from '../features/notes/notesSlice';
 import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../types';
-import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
+import { getPriorityOptions, getBackgroundColors, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save, Edit } from 'lucide-react';
 import PortalModal from './PortalModal';
 import ConfirmModal from './ConfirmModal';
@@ -22,7 +23,8 @@ interface NoteModalProps {
 const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, preselectedTag, isReadOnly = false }) => {
   const dispatch = useAppDispatch();
   const notes = useAppSelector(selectAllNotes);
-  
+  const { t } = useLanguage();
+
   // Form state
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -38,7 +40,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
-  
+
   // Confirm 모달 상태
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -53,7 +55,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     message: '',
     variant: 'info',
     type: 'confirm',
-    onConfirm: () => {}
+    onConfirm: () => { }
   });
 
   // 모달이 열릴 때 상태 초기화
@@ -65,7 +67,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setSelectedTags([]);
         setPriority(DEFAULT_NOTE_DATA.priority);
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
-        setModalTitle('새 노트 작성');
+        setModalTitle(t('modal.title.newNote'));
         setIsDirty(false); // 생성 모드에서는 처음엔 clean
       } else if (note) {
         setTitle(note.title);
@@ -79,12 +81,12 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         } else if (mode === 'edit') {
           setIsDirty(true); // 편집 모드에서는 바로 수정 가능
         }
-        
+
         // Trash에 있는 노트인지 확인하여 타이틀 설정
         if (note.deleted) {
-          setModalTitle('노트 보기 (Trash)');
+          setModalTitle(t('modal.title.viewNoteTrash'));
         } else {
-        setModalTitle(mode === 'view' ? '노트 보기' : '노트 수정');
+          setModalTitle(mode === 'view' ? t('modal.title.viewNote') : t('modal.title.editNote'));
         }
       }
     } else {
@@ -99,14 +101,14 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setModalTitle('');
       }, 200);
     }
-  }, [isOpen, mode, note]);
+  }, [isOpen, mode, note, t]);
 
   // '보기' 모드에서 내용 변경 시 '수정' 모드로 전환
   useEffect(() => {
     if (isOpen && mode === 'view' && !isReadOnly && note) {
       // 초기 로딩이 완료된 후에만 변경 감지 시작
       const timer = setTimeout(() => {
-        const hasChanged = 
+        const hasChanged =
           note.title !== title ||
           note.content !== content ||
           note.priority !== priority ||
@@ -117,30 +119,30 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           setIsDirty(true);
           // Trash에 있는 노트인지 확인하여 타이틀 설정
           if (note.deleted) {
-            setModalTitle('노트 수정 (Trash)');
+            setModalTitle(t('modal.title.editNote'));
           } else {
-          setModalTitle('노트 수정');
+            setModalTitle(t('modal.title.editNote'));
+          }
         }
-      }
       }, 100); // 초기 로딩 완료 후 100ms 지연
 
       return () => clearTimeout(timer);
     }
-  }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags, isDirty]);
+  }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags, isDirty, t]);
 
   // 생성 모드에서 내용 변경 시 isDirty 설정
   useEffect(() => {
     if (isOpen && mode === 'create') {
       const timer = setTimeout(() => {
-        const hasChanged = 
+        const hasChanged =
           title !== '' ||
           content !== '' ||
           priority !== DEFAULT_NOTE_DATA.priority ||
           backgroundColor !== DEFAULT_NOTE_DATA.backgroundColor ||
           selectedTags.length > 0;
-        
+
         if (hasChanged && !isDirty) {
-            setIsDirty(true);
+          setIsDirty(true);
         }
       }, 100); // 초기 로딩 완료 후 100ms 지연
 
@@ -173,8 +175,8 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     if (title.trim() === '') {
       setConfirmModal({
         isOpen: true,
-        title: '입력 오류',
-        message: '제목을 입력해주세요.',
+        title: t('error.saveFailed'),
+        message: t('message.saveFailed'),
         variant: 'warning',
         type: 'alert',
         onConfirm: () => {
@@ -194,11 +196,11 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       }
       handleClose();
     } catch (error) {
-      console.error(`노트 ${mode === 'create' ? '생성' : '수정'} 실패:`, error);
+      console.error(t(mode === 'create' ? 'error.noteCreateFailed' : 'error.noteUpdateFailed'), error);
       setConfirmModal({
         isOpen: true,
-        title: `${mode === 'create' ? '생성' : '수정'} 실패`,
-        message: `노트 ${mode === 'create' ? '생성' : '수정'}에 실패했습니다. 다시 시도해주세요.`,
+        title: t(mode === 'create' ? 'modal.title.createFailed' : 'modal.title.updateFailed'),
+        message: t(mode === 'create' ? 'message.createFailed' : 'message.updateFailed'),
         variant: 'danger',
         type: 'alert',
         onConfirm: () => {
@@ -251,16 +253,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   if (!isOpen) return null;
 
   const finalIsReadOnly = isReadOnly;
-  const submitButtonText = mode === 'create' ? '생성하기' : '수정하기';
+  const submitButtonText = mode === 'create' ? t('button.save') : t('button.save');
   const submitButtonIcon = mode === 'create' ? <Plus size={16} /> : <Save size={16} />;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999
                  max-sm:items-stretch max-sm:justify-stretch"
     >
       {/* 모달 컨텐츠 */}
-      <div 
+      <div
         ref={modalContentRef}
         className="relative bg-white shadow-xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col
                    sm:rounded-lg sm:max-w-2xl
@@ -284,7 +286,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           {/* 제목 입력 */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-              제목 *
+              {t('label.title')} *
             </label>
             <input
               id="title"
@@ -293,7 +295,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
-              placeholder="노트 제목을 입력하세요"
+              placeholder={t('placeholder.title')}
               required
               disabled={isSubmitting || finalIsReadOnly}
             />
@@ -302,12 +304,11 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           {/* 내용 입력 */}
           <div>
             <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-              내용
+              {t('label.content')}
             </label>
-            <div 
-              className={`border border-gray-300 rounded-lg transition-all duration-200 ${
-                !finalIsReadOnly && 'focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500'
-              }`}
+            <div
+              className={`border border-gray-300 rounded-lg transition-all duration-200 ${!finalIsReadOnly && 'focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500'
+                }`}
               style={{ backgroundColor: backgroundColor }}
             >
               <textarea
@@ -315,7 +316,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full px-3 py-2 bg-transparent border-0 focus:outline-none resize-none"
-                placeholder="노트 내용을 입력하세요"
+                placeholder={t('placeholder.content')}
                 rows={6}
                 disabled={isSubmitting || finalIsReadOnly}
               />
@@ -327,18 +328,18 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             <div className="flex items-center justify-between mb-2">
               <span className="block text-sm font-medium text-gray-700">
                 <TagIcon className="inline w-4 h-4 mr-1" />
-                태그
+                {t('label.tags')}
               </span>
               {!isReadOnly && (
-              <button
-                type="button"
-                onClick={() => setIsTagModalOpen(true)}
-                className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-medium rounded-lg border border-blue-200 transition-colors duration-200 flex items-center gap-1"
-                disabled={isSubmitting || finalIsReadOnly}
-              >
-                <TagIcon className="w-3 h-3" />
-                태그 관리
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setIsTagModalOpen(true)}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-medium rounded-lg border border-blue-200 transition-colors duration-200 flex items-center gap-1"
+                  disabled={isSubmitting || finalIsReadOnly}
+                >
+                  <TagIcon className="w-3 h-3" />
+                  {t('menu.tagManagement')}
+                </button>
               )}
             </div>
             {/* 선택된 태그 표시 */}
@@ -365,7 +366,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
               </div>
             ) : (
               <div className="text-gray-500 text-sm py-2">
-                태그 관리를 클릭하여 태그를 선택하세요.
+                {t('message.untagged')}
               </div>
             )}
           </div>
@@ -376,9 +377,9 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             <div className="w-32 flex-shrink-0">
               <span className="block text-sm font-medium text-gray-700 mb-2">
                 <Flag className="inline w-4 h-4 mr-1" />
-                우선순위
+                {t('label.priority')}
               </span>
-              
+
               {/* 모바일: 커스텀 드롭다운 */}
               <div className="block sm:hidden">
                 <div className="relative">
@@ -389,20 +390,20 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                     disabled={isSubmitting || finalIsReadOnly}
                   >
                     <div className="flex items-center gap-2">
-                      <div 
+                      <div
                         className="w-4 h-4 rounded border border-gray-300"
-                        style={{ backgroundColor: PRIORITY_OPTIONS.find(p => p.value === priority)?.color || '#6b7280' }}
+                        style={{ backgroundColor: getPriorityOptions().find(p => p.value === priority)?.color || '#6b7280' }}
                       />
-                      <span>{PRIORITY_OPTIONS.find(p => p.value === priority)?.label || '우선순위 선택'}</span>
+                      <span>{getPriorityOptions().find(p => p.value === priority)?.label || t('label.priority')}</span>
                     </div>
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  
+
                   {showPriorityDropdown && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-                      {PRIORITY_OPTIONS.map((option) => (
+                      {getPriorityOptions().map((option) => (
                         <button
                           key={option.value}
                           type="button"
@@ -412,7 +413,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                           }}
                           className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
                         >
-                          <div 
+                          <div
                             className="w-4 h-4 rounded border border-gray-300"
                             style={{ backgroundColor: option.color }}
                           />
@@ -423,17 +424,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                   )}
                 </div>
               </div>
-              
+
               {/* 데스크톱: 기존 버튼 형태 */}
               <div className="hidden sm:flex gap-1 flex-wrap">
-                {PRIORITY_OPTIONS.map((option) => (
+                {getPriorityOptions().map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setPriority(option.value)}
-                    className={`px-2 py-1 rounded text-xs font-medium transition-colors duration-200 ${
-                      priority === option.value ? 'text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                    }`}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors duration-200 ${priority === option.value ? 'text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                      }`}
                     style={{ backgroundColor: priority === option.value ? option.color : undefined }}
                     disabled={isSubmitting || finalIsReadOnly}
                   >
@@ -447,9 +447,9 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             <div className="flex-1">
               <label htmlFor="backgroundColor" className="block text-sm font-medium text-gray-700 mb-2">
                 <Palette className="inline w-4 h-4 mr-1" />
-                배경색
+                {t('label.backgroundColor')}
               </label>
-              
+
               {/* 모바일: 드롭다운 + 커스텀 색상 선택기 */}
               <div className="block sm:hidden">
                 <div className="flex items-center gap-2">
@@ -461,21 +461,21 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-left flex items-center justify-between"
                       disabled={isSubmitting || finalIsReadOnly}
                     >
-              <div className="flex items-center gap-2">
-                        <div 
+                      <div className="flex items-center gap-2">
+                        <div
                           className="w-4 h-4 rounded border border-gray-300"
                           style={{ backgroundColor: backgroundColor }}
                         />
-                        <span>{BACKGROUND_COLORS.find(c => c.value === backgroundColor)?.label || '색상 선택'}</span>
+                        <span>{getBackgroundColors().find(c => c.value === backgroundColor)?.label || t('label.backgroundColor')}</span>
                       </div>
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
-                    
+
                     {showColorDropdown && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                        {BACKGROUND_COLORS.map((color) => (
+                        {getBackgroundColors().map((color) => (
                           <button
                             key={color.value}
                             type="button"
@@ -485,7 +485,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                             }}
                             className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
                           >
-                            <div 
+                            <div
                               className="w-4 h-4 rounded border border-gray-300"
                               style={{ backgroundColor: color.preview }}
                             />
@@ -495,7 +495,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                       </div>
                     )}
                   </div>
-                  
+
                   {/* 커스텀 색상 선택기 */}
                   <input
                     id="backgroundColor"
@@ -509,17 +509,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                   />
                 </div>
               </div>
-              
+
               {/* 데스크톱: 기존 형태 */}
               <div className="hidden sm:flex items-center gap-1 flex-wrap">
-                {BACKGROUND_COLORS.map((color) => (
+                {getBackgroundColors().map((color) => (
                   <button
                     key={color.value}
                     type="button"
                     onClick={() => setBackgroundColor(color.value)}
-                    className={`w-6 h-6 rounded border-2 transition-all duration-200 ${
-                      backgroundColor === color.value ? 'border-blue-500 scale-110' : 'border-gray-300 hover:border-gray-400'
-                    }`}
+                    className={`w-6 h-6 rounded border-2 transition-all duration-200 ${backgroundColor === color.value ? 'border-blue-500 scale-110' : 'border-gray-300 hover:border-gray-400'
+                      }`}
                     style={{ backgroundColor: color.preview }}
                     title={color.label}
                     disabled={isSubmitting || finalIsReadOnly}
@@ -543,14 +542,14 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           {/* 버튼 그룹 */}
           <div className="flex justify-end space-x-3 pt-4 flex-shrink-0">
             <button type="button" onClick={handleClose} className="btn-secondary" disabled={isSubmitting}>
-              {isReadOnly ? '닫기' : '취소'}
+              {isReadOnly ? t('button.close') : t('button.cancel')}
             </button>
             {!isReadOnly && (
               <button type="submit" className="btn-primary flex items-center space-x-2" disabled={isSubmitting || !isDirty}>
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>{mode === 'create' ? '생성 중...' : '수정 중...'}</span>
+                    <span>{mode === 'create' ? t('message.loading') : t('message.loading')}</span>
                   </>
                 ) : (
                   <>
@@ -562,22 +561,22 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             )}
             {/* 보기 모드에서 수정 버튼 (Trash가 아닌 경우) */}
             {mode === 'view' && !isReadOnly && !isDirty && (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => {
                   setIsDirty(true);
                   // 모달 타이틀도 수정 모드로 변경
                   if (note?.deleted) {
-                    setModalTitle('노트 수정 (Trash)');
+                    setModalTitle(t('modal.title.editNote'));
                   } else {
-                    setModalTitle('노트 수정');
+                    setModalTitle(t('modal.title.editNote'));
                   }
                 }}
                 className="btn-primary flex items-center space-x-2"
                 disabled={isSubmitting}
               >
                 <Edit size={16} />
-                <span>수정하기</span>
+                <span>{t('button.edit')}</span>
               </button>
             )}
 
@@ -585,7 +584,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             {isReadOnly && note?.deleted && (
               <div className="flex-1 text-center">
                 <p className="text-sm text-gray-500 italic">
-                  Trash에 있는 노트는 수정할 수 없습니다
+                  {t('message.untagged')}
                 </p>
               </div>
             )}
@@ -605,7 +604,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           />
         </Suspense>
       </PortalModal>
-      
+
       {/* Confirm 모달 */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}

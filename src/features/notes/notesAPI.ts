@@ -1,14 +1,15 @@
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  deleteDoc, 
-  doc, 
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
   updateDoc,
   orderBy,
   query
 } from 'firebase/firestore';
 import { db } from '../../firebase';
+import i18n from '../../i18n';
 import type { Note, CreateNoteData, UpdateNoteData } from '../../types';
 
 // Firestore 컬렉션 이름
@@ -20,7 +21,7 @@ export const fetchNotesAPI = async (): Promise<Note[]> => {
     const notesRef = collection(db, COLLECTION_NAME);
     const q = query(notesRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    
+
     const notes: Note[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
@@ -38,11 +39,11 @@ export const fetchNotesAPI = async (): Promise<Note[]> => {
         pinned: data.pinned || false,
       });
     });
-    
+
     return notes;
   } catch (error) {
-    console.error('Error fetching notes:', error);
-    throw new Error('노트를 불러오는데 실패했습니다.');
+    console.error(i18n.t('error.fetchNotesFailed'), error);
+    throw new Error(i18n.t('message.loadNotesFailed'));
   }
 };
 
@@ -58,16 +59,16 @@ export const addNoteAPI = async (noteData: CreateNoteData): Promise<Note> => {
       createdAt: now,
       updatedAt: now,
     };
-    
+
     const docRef = await addDoc(collection(db, COLLECTION_NAME), noteToAdd);
-    
+
     return {
       id: docRef.id,
       ...noteToAdd,
     };
   } catch (error) {
-    console.error('Error adding note:', error);
-    throw new Error('노트 추가에 실패했습니다.');
+    console.error(i18n.t('error.noteCreateFailed'), error);
+    throw new Error(i18n.t('message.createFailed'));
   }
 };
 
@@ -76,8 +77,8 @@ export const deleteNoteAPI = async (noteId: string): Promise<void> => {
   try {
     await deleteDoc(doc(db, COLLECTION_NAME, noteId));
   } catch (error) {
-    console.error('Error deleting note:', error);
-    throw new Error('노트 삭제에 실패했습니다.');
+    console.error(i18n.t('error.deleteFailed'), error);
+    throw new Error(i18n.t('message.deleteFailed'));
   }
 };
 
@@ -86,20 +87,20 @@ export const updateNoteAPI = async (noteData: UpdateNoteData): Promise<Note> => 
   try {
     const { id, ...updateData } = noteData;
     const now = new Date().toISOString();
-    
+
     await updateDoc(doc(db, COLLECTION_NAME, id), {
       ...updateData,
       updatedAt: now,
     });
-    
+
     // 업데이트된 노트 정보를 반환하기 위해 전체 노트를 다시 가져옴
     const updatedNote = await getDocs(query(collection(db, COLLECTION_NAME)));
     const noteDoc = updatedNote.docs.find(doc => doc.id === id);
-    
+
     if (!noteDoc) {
-      throw new Error('노트를 찾을 수 없습니다.');
+      throw new Error(i18n.t('message.noteNotFound'));
     }
-    
+
     const data = noteDoc.data();
     return {
       id: noteDoc.id,
@@ -115,7 +116,7 @@ export const updateNoteAPI = async (noteData: UpdateNoteData): Promise<Note> => 
       pinned: data.pinned || false,
     };
   } catch (error) {
-    console.error('Error updating note:', error);
-    throw new Error('노트 수정에 실패했습니다.');
+    console.error(i18n.t('error.noteUpdateFailed'), error);
+    throw new Error(i18n.t('message.updateFailed'));
   }
 };

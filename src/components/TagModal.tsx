@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
+import { useLanguage } from '../app/hooks/useLanguage';
 import { updateNote } from '../features/notes/notesSlice';
-import { 
-  fetchTags, 
-  addTag, 
-  updateTag, 
+import {
+  fetchTags,
+  addTag,
+  updateTag,
   deleteTag
 } from '../features/tags/tagsSlice';
 import type { Tag } from '../types';
@@ -19,14 +20,15 @@ interface TagModalProps {
   onTagsChange?: (tags: Tag[]) => void; // select 모드에서만 사용
 }
 
-const TagModal: React.FC<TagModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  mode, 
-  selectedTags = [], 
-  onTagsChange 
+const TagModal: React.FC<TagModalProps> = ({
+  isOpen,
+  onClose,
+  mode,
+  selectedTags = [],
+  onTagsChange
 }) => {
   const dispatch = useAppDispatch();
+  const { t } = useLanguage();
   const { notes } = useAppSelector((state) => state.notes);
   const { tags, loading } = useAppSelector((state) => state.tags);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +50,7 @@ const TagModal: React.FC<TagModalProps> = ({
     message: '',
     variant: 'info',
     type: 'confirm',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // 태그가 로드되지 않았으면 로드
@@ -59,19 +61,19 @@ const TagModal: React.FC<TagModalProps> = ({
           // 태그 로드
           await dispatch(fetchTags()).unwrap();
         } catch (error) {
-          console.error('태그 로드 실패:', error);
+          console.error(t('error.tagLoadFailed'), error);
         }
       };
-      
+
       loadTags();
     }
-  }, [isOpen, mode, tags, dispatch]);
+  }, [isOpen, mode, tags, dispatch, t]);
 
   // 모든 태그 (Redux store + 노트에서 사용 중인 태그들 + 현재 선택된 태그들)
   const getAllTags = () => {
     const reduxTags = tags;
     const noteTags: Tag[] = [];
-    
+
     // 노트에서 사용 중인 모든 태그 수집
     notes.forEach(note => {
       note.tags.forEach(tag => {
@@ -80,25 +82,25 @@ const TagModal: React.FC<TagModalProps> = ({
         }
       });
     });
-    
+
     // Redux 태그와 노트 태그를 합치되, 중복 제거
     const allTagsMap = new Map<string, Tag>();
-    
+
     // Redux 태그 먼저 추가
     reduxTags.forEach(tag => {
       allTagsMap.set(tag.name, tag);
     });
-    
+
     // 노트 태그 추가 (이름이 같으면 덮어쓰기)
     noteTags.forEach(tag => {
       allTagsMap.set(tag.name, tag);
     });
-    
+
     // 현재 선택된 태그들도 추가 (select 모드에서 임시 태그 포함)
     selectedTags.forEach(tag => {
       allTagsMap.set(tag.name, tag);
     });
-    
+
     return Array.from(allTagsMap.values());
   };
 
@@ -112,35 +114,35 @@ const TagModal: React.FC<TagModalProps> = ({
   // 새 태그 추가
   const handleAddNewTag = async () => {
     const trimmedName = newTagName.trim();
-    
+
     // 중복 검사: Redux store, 노트 태그, 현재 선택된 태그 모두 확인
     const isDuplicate = allTags.find(tag => tag.name === trimmedName) ||
-                       selectedTags.find(tag => tag.name === trimmedName);
-    
+      selectedTags.find(tag => tag.name === trimmedName);
+
     if (trimmedName && !isDuplicate) {
       try {
         // 모든 모드에서 실제 태그 생성 (Redux store에 저장)
         const newTag = await dispatch(addTag({
           name: trimmedName,
-        color: newTagColor,
-        usageCount: 0
+          color: newTagColor,
+          usageCount: 0
         })).unwrap();
-      
+
         // select 모드에서는 생성된 태그를 선택된 태그 목록에 추가
         if (mode === 'select' && onTagsChange) {
-      const updatedTags = [...selectedTags, newTag];
-      onTagsChange(updatedTags);
+          const updatedTags = [...selectedTags, newTag];
+          onTagsChange(updatedTags);
         }
-        
+
         // 입력 필드 초기화
-      setNewTagName('');
-              setNewTagColor('#3b82f6');
+        setNewTagName('');
+        setNewTagColor('#3b82f6');
       } catch (error) {
-        console.error('새 태그 추가 실패:', error);
+        console.error(t('error.tagAddFailed'), error);
         setConfirmModal({
           isOpen: true,
-          title: '태그 추가 실패',
-          message: '새 태그 추가에 실패했습니다. 다시 시도해주세요.',
+          title: t('modal.title.tagAddFailed'),
+          message: t('message.tagAddFailed'),
           variant: 'danger',
           type: 'alert',
           onConfirm: () => {
@@ -152,8 +154,8 @@ const TagModal: React.FC<TagModalProps> = ({
       // 중복 태그가 있을 때 알림 표시
       setConfirmModal({
         isOpen: true,
-        title: '중복 태그',
-        message: `"${trimmedName}" 태그는 이미 존재합니다.`,
+        title: t('modal.title.duplicateTag'),
+        message: t('message.duplicateTag', { tagName: trimmedName }),
         variant: 'warning',
         type: 'alert',
         onConfirm: () => {
@@ -166,7 +168,7 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 선택/해제 (select 모드)
   const handleTagToggle = (tag: Tag) => {
     if (mode !== 'select' || !onTagsChange) return;
-    
+
     const isSelected = selectedTags.find(t => t.id === tag.id);
     let updatedTags: Tag[];
 
@@ -182,7 +184,7 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 편집 시작 (manage 모드)
   const handleStartEdit = (tag: Tag) => {
     if (mode !== 'manage') return;
-    
+
     setEditingTag(tag);
     setEditName(tag.name);
     setEditColor(tag.color);
@@ -191,13 +193,13 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 편집 저장 (manage 모드)
   const handleSaveEdit = () => {
     if (mode !== 'manage' || !editingTag) return;
-    
+
     if (editName.trim() && (editName !== editingTag.name || editColor !== editingTag.color)) {
       // Confirm 모달 표시
       setConfirmModal({
         isOpen: true,
-        title: '태그 수정',
-        message: `태그 "${editingTag.name}"을 "${editName.trim()}"으로 수정하시겠습니까?`,
+        title: t('modal.title.tagEdit'),
+        message: t('message.tagEditConfirm', { oldName: editingTag.name, newName: editName.trim() }),
         variant: 'info',
         onConfirm: async () => {
           try {
@@ -207,16 +209,16 @@ const TagModal: React.FC<TagModalProps> = ({
               name: editName.trim(),
               color: editColor
             })).unwrap();
-            
+
             // 노트에서 사용 중인 태그도 업데이트
-            const notesToUpdate = notes.filter(note => 
+            const notesToUpdate = notes.filter(note =>
               note.tags.some(tag => tag.id === editingTag.id)
             );
 
             // 각 노트의 태그를 업데이트
             for (const note of notesToUpdate) {
-              const updatedTags = note.tags.map(tag => 
-                tag.id === editingTag.id 
+              const updatedTags = note.tags.map(tag =>
+                tag.id === editingTag.id
                   ? { ...tag, name: editName.trim(), color: editColor }
                   : tag
               );
@@ -231,15 +233,15 @@ const TagModal: React.FC<TagModalProps> = ({
             setEditingTag(null);
             setEditName('');
             setEditColor('');
-            
+
             // Confirm 모달 닫기
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
-            console.error('태그 업데이트 실패:', error);
+            console.error(t('error.tagUpdateFailed'), error);
             setConfirmModal({
               isOpen: true,
-              title: '수정 실패',
-              message: '태그 업데이트에 실패했습니다. 다시 시도해주세요.',
+              title: t('modal.title.editFailed'),
+              message: t('message.tagUpdateFailed'),
               variant: 'danger',
               type: 'alert',
               onConfirm: () => {
@@ -267,18 +269,18 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 삭제 (manage 모드)
   const handleDeleteTag = (tag: Tag) => {
     if (mode !== 'manage') return;
-    
+
     // 실제 사용량을 다시 계산하여 확인
-    const actualUsageCount = notes.filter(note => 
+    const actualUsageCount = notes.filter(note =>
       !note.deleted && !note.archived && note.tags.some(t => t.id === tag.id)
     ).length;
-    
+
     if (actualUsageCount > 0) {
       // 사용 중인 태그 삭제 시도 시 Confirm 모달 표시
       setConfirmModal({
         isOpen: true,
-        title: '태그 삭제 불가',
-        message: `이 태그는 ${actualUsageCount}개의 활성 노트에서 사용 중입니다. 먼저 노트에서 태그를 제거해주세요.`,
+        title: t('modal.title.tagDeleteBlocked'),
+        message: t('message.tagDeleteBlocked', { count: actualUsageCount }),
         variant: 'warning',
         type: 'alert',
         onConfirm: () => {
@@ -287,17 +289,17 @@ const TagModal: React.FC<TagModalProps> = ({
       });
       return;
     }
-    
+
     // Confirm 모달 표시
     setConfirmModal({
       isOpen: true,
-      title: '태그 삭제',
-      message: `태그 "${tag.name}"을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+      title: t('modal.title.tagDelete'),
+      message: t('message.tagDeleteConfirm', { tagName: tag.name }),
       variant: 'danger',
       onConfirm: async () => {
         try {
           // 노트에서 사용 중인 태그 제거
-          const notesToUpdate = notes.filter(note => 
+          const notesToUpdate = notes.filter(note =>
             note.tags.some(noteTag => noteTag.id === tag.id)
           );
 
@@ -313,15 +315,15 @@ const TagModal: React.FC<TagModalProps> = ({
 
           // Redux store에서 태그 삭제
           await dispatch(deleteTag(tag.id)).unwrap();
-          
+
           // Confirm 모달 닫기
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
-          console.error('태그 삭제 실패:', error);
+          console.error(t('error.tagDeleteFailed'), error);
           setConfirmModal({
             isOpen: true,
-            title: '삭제 실패',
-            message: '태그 삭제에 실패했습니다. 다시 시도해주세요.',
+            title: t('modal.title.deleteFailed'),
+            message: t('message.tagDeleteFailed'),
             variant: 'danger',
             type: 'alert',
             onConfirm: () => {
@@ -337,7 +339,7 @@ const TagModal: React.FC<TagModalProps> = ({
   const handleClose = useCallback(() => {
     setSearchTerm('');
     setNewTagName('');
-            setNewTagColor('#3b82f6');
+    setNewTagColor('#3b82f6');
     setEditingTag(null);
     setEditName('');
     setEditColor('');
@@ -361,12 +363,12 @@ const TagModal: React.FC<TagModalProps> = ({
   const isSelectMode = mode === 'select';
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000
                  max-sm:items-stretch max-sm:justify-stretch"
     >
       {/* 모달 컨텐츠 */}
-      <div 
+      <div
         className={`relative bg-white shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden
                    sm:rounded-xl sm:max-w-2xl
                    max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen`}
@@ -375,7 +377,7 @@ const TagModal: React.FC<TagModalProps> = ({
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">
-            {isSelectMode ? '태그 선택' : '태그 관리'}
+            {isSelectMode ? t('tag.title.select') : t('tag.title.manage')}
           </h2>
           <button
             onClick={handleClose}
@@ -391,7 +393,7 @@ const TagModal: React.FC<TagModalProps> = ({
           <div>
             <label htmlFor="tagSearch" className="block text-sm font-medium text-gray-700 mb-2">
               <Search className="inline w-4 h-4 mr-1" />
-              태그 검색
+              {t('tag.search.placeholder')}
             </label>
             <input
               id="tagSearch"
@@ -400,7 +402,7 @@ const TagModal: React.FC<TagModalProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
-              placeholder="태그 이름으로 검색"
+              placeholder={t('tag.search.placeholder')}
             />
           </div>
 
@@ -409,7 +411,7 @@ const TagModal: React.FC<TagModalProps> = ({
             <div className="flex-1">
               <label htmlFor="newTagName" className="block text-sm font-medium text-gray-700 mb-2">
                 <Plus className="inline w-4 h-4 mr-1" />
-                새 태그 추가
+                {t('tag.add.new')}
               </label>
               <input
                 id="newTagName"
@@ -424,12 +426,12 @@ const TagModal: React.FC<TagModalProps> = ({
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
-                placeholder="새 태그 이름 입력"
+                placeholder={t('tag.add.namePlaceholder')}
               />
             </div>
             <div className="flex items-end">
               <label htmlFor="newTagColor" className="block text-sm font-medium text-gray-700 mb-2">
-                색상
+                {t('tag.add.color')}
               </label>
               <input
                 id="newTagColor"
@@ -438,7 +440,7 @@ const TagModal: React.FC<TagModalProps> = ({
                 value={newTagColor}
                 onChange={(e) => setNewTagColor(e.target.value)}
                 className="w-10 h-10 rounded border-2 border-gray-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ml-2"
-                title="태그 색상 선택"
+                title={t('tag.add.colorTitle')}
               />
             </div>
             <div className="flex items-end">
@@ -446,9 +448,9 @@ const TagModal: React.FC<TagModalProps> = ({
                 onClick={handleAddNewTag}
                 disabled={!newTagName.trim()}
                 className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 h-10 flex items-center rounded-lg"
-                title="추가"
+                title={t('tag.add.buttonTitle')}
               >
-                추가
+                {t('tag.add.button')}
               </button>
             </div>
           </div>
@@ -459,15 +461,15 @@ const TagModal: React.FC<TagModalProps> = ({
           {/* 태그 목록 */}
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              {isSelectMode ? '사용 가능한 태그' : '기존 태그 관리'}
+              {isSelectMode ? t('tag.available.select') : t('tag.available.manage')}
             </h3>
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="text-gray-500 text-sm">태그를 불러오는 중...</p>
+                <p className="text-gray-500 text-sm">{t('tag.loading')}</p>
               </div>
             ) : filteredTags.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">사용 가능한 태그가 없습니다.</p>
+              <p className="text-gray-500 text-center py-8">{t('tag.empty')}</p>
             ) : (
               <div className={isSelectMode ? "flex flex-wrap gap-2" : "space-y-3"}>
                 {filteredTags.map((tag) => {
@@ -476,36 +478,34 @@ const TagModal: React.FC<TagModalProps> = ({
 
                   if (isSelectMode) {
                     // Select 모드: 태그 선택/해제 UI
-                  return (
-                    <div
-                      key={tag.id}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                          isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      onClick={() => handleTagToggle(tag)}
-                    >
-                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+                    return (
+                      <div
+                        key={tag.id}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        onClick={() => handleTagToggle(tag)}
+                      >
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
                         <span className={`font-medium text-sm ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                           {tag.name}
                         </span>
-                      <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
-                      {isSelected && (
-                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  );
+                        <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
+                        {isSelected && (
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    );
                   } else {
                     // Manage 모드: 태그 편집/삭제 UI
                     return (
                       <div
                         key={tag.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${
-                          isEditing ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${isEditing ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                          }`}
                       >
                         {/* 태그 색상 */}
                         <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
@@ -529,7 +529,7 @@ const TagModal: React.FC<TagModalProps> = ({
                                 value={editColor}
                                 onChange={(e) => setEditColor(e.target.value)}
                                 className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                                title="태그 색상 변경"
+                                title={t('tag.edit.colorTitle')}
                               />
                             </div>
                           ) : (
@@ -547,14 +547,14 @@ const TagModal: React.FC<TagModalProps> = ({
                               <button
                                 onClick={handleSaveEdit}
                                 className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-100 rounded transition-colors duration-200"
-                                title="저장"
+                                title={t('tag.edit.saveTitle')}
                               >
                                 <Check size={16} />
                               </button>
                               <button
                                 onClick={handleCancelEdit}
                                 className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200"
-                                title="취소"
+                                title={t('tag.edit.cancelTitle')}
                               >
                                 <X size={16} />
                               </button>
@@ -564,14 +564,14 @@ const TagModal: React.FC<TagModalProps> = ({
                               <button
                                 onClick={() => handleStartEdit(tag)}
                                 className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors duration-200"
-                                title="편집"
+                                title={t('tag.edit.editTitle')}
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
                                 onClick={() => handleDeleteTag(tag)}
                                 className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-100 rounded transition-colors duration-200"
-                                title="삭제"
+                                title={t('tag.edit.deleteTitle')}
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -590,7 +590,7 @@ const TagModal: React.FC<TagModalProps> = ({
           <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             {isSelectMode && selectedTags.length > 0 && (
               <div className="mb-3">
-                <h3 className="text-base font-medium text-gray-900 mb-2">선택된 태그</h3>
+                <h3 className="text-base font-medium text-gray-900 mb-2">{t('tag.selected.title')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {selectedTags.map((tag) => (
                     <span key={tag.id} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white" style={{ backgroundColor: tag.color }}>
@@ -610,19 +610,18 @@ const TagModal: React.FC<TagModalProps> = ({
             <div className="flex justify-end">
               <button
                 onClick={handleClose}
-                className={`px-6 py-2 rounded-lg transition-colors duration-200 ${
-                  isSelectMode
+                className={`px-6 py-2 rounded-lg transition-colors duration-200 ${isSelectMode
                     ? 'w-full bg-gray-600 text-white hover:bg-gray-700'
                     : 'bg-gray-600 text-white hover:bg-gray-700'
-                }`}
+                  }`}
               >
-                {isSelectMode ? '완료' : '완료'}
+                {t('tag.done')}
               </button>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Confirm 모달 */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}

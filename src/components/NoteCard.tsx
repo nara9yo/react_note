@@ -1,11 +1,31 @@
 import { useState, Suspense, lazy } from 'react';
 import type { Note } from '../types';
 import { useAppDispatch } from '../app/hooks';
+import { useLanguage } from '../app/hooks/useLanguage';
 import { deleteNote, updateNote } from '../features/notes/notesSlice';
 import { Edit, Trash2, Calendar, Pin, Archive, ArchiveRestore, RotateCcw, CheckSquare, Square } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import { format, register } from 'timeago.js';
 import ko from 'timeago.js/lib/lang/ko';
+import en from 'timeago.js/lib/lang/en_US';
+
+// 짧은 형태의 영문 로케일 정의
+const enShort = (_number: number, index: number) => [
+  ['just now', 'right now'],
+  ['%ss ago', 'in %ss'],
+  ['1m ago', 'in 1m'],
+  ['%sm ago', 'in %sm'],
+  ['1h ago', 'in 1h'],
+  ['%sh ago', 'in %sh'],
+  ['1d ago', 'in 1d'],
+  ['%sd ago', 'in %sd'],
+  ['1w ago', 'in 1w'],
+  ['%sw ago', 'in %sw'],
+  ['1mo ago', 'in 1mo'],
+  ['%smo ago', 'in %smo'],
+  ['1y ago', 'in 1y'],
+  ['%sy ago', 'in %sy'],
+][index] as [string, string];
 
 // 지연 로딩을 위한 NoteModal
 const NoteModal = lazy(() => import('./NoteModal'));
@@ -18,12 +38,15 @@ interface NoteCardProps {
 }
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle }) => {
-  // timeago.js에 한국어 로케일 등록
-  register('ko', ko);
-  
   const dispatch = useAppDispatch();
+  const { t, currentLanguage } = useLanguage();
+
+  // timeago.js에 언어별 로케일 등록
+  register('ko', ko);
+  register('en', en);
+  register('en_short', enShort);
   const [modalConfig, setModalConfig] = useState<{ isOpen: boolean; mode: 'view' | 'edit' }>({ isOpen: false, mode: 'view' });
-  
+
   // Confirm 모달 관련 상태
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -38,28 +61,28 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     message: '',
     variant: 'info',
     type: 'confirm',
-    onConfirm: () => {}
+    onConfirm: () => { }
   });
 
-    // 노트 삭제 처리 (trash로 이동 또는 완전 삭제)
+  // 노트 삭제 처리 (trash로 이동 또는 완전 삭제)
   const handleDelete = () => {
     if (note.deleted) {
       // 이미 trash에 있는 경우 - 완전 삭제
       setConfirmModal({
         isOpen: true,
-        title: '완전 삭제',
-        message: '정말로 이 노트를 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+        title: t('modal.title.permanentDelete'),
+        message: t('message.permanentDeleteConfirm'),
         variant: 'danger',
         onConfirm: async () => {
           try {
             await dispatch(deleteNote(note.id)).unwrap();
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
-            console.error('노트 완전 삭제 실패:', error);
+            console.error(t('error.permanentDeleteFailed'), error);
             setConfirmModal({
               isOpen: true,
-              title: '삭제 실패',
-              message: '노트 완전 삭제에 실패했습니다. 다시 시도해주세요.',
+              title: t('error.deleteFailed'),
+              message: t('error.retryMessage'),
               variant: 'danger',
               type: 'alert',
               onConfirm: () => {
@@ -74,8 +97,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
       // 일반 노트인 경우 - trash로 이동
       setConfirmModal({
         isOpen: true,
-        title: 'Trash로 이동',
-        message: '이 노트를 Trash로 이동하시겠습니까?',
+        title: t('modal.title.moveToTrash'),
+        message: t('message.moveToTrash'),
         variant: 'warning',
         onConfirm: async () => {
           try {
@@ -86,11 +109,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
             })).unwrap();
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
-            console.error('노트 삭제 실패:', error);
+            console.error(t('error.deleteFailed'), error);
             setConfirmModal({
               isOpen: true,
-              title: '삭제 실패',
-              message: '노트 삭제에 실패했습니다. 다시 시도해주세요.',
+              title: t('error.deleteFailed'),
+              message: t('error.retryMessage'),
               variant: 'danger',
               type: 'alert',
               onConfirm: () => {
@@ -106,10 +129,9 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
 
   // 노트 Archive/Archive 해제 처리
   const handleArchive = () => {
-    const action = note.archived ? 'Archive를 해제' : 'Archive';
-    const title = note.archived ? 'Archive 해제' : '노트 Archive';
-    const message = `이 노트를 ${action}하시겠습니까?`;
-    
+    const title = note.archived ? t('modal.title.unarchiveNote') : t('modal.title.archiveNote');
+    const message = note.archived ? t('message.unarchiveConfirm') : t('message.archiveConfirm');
+
     setConfirmModal({
       isOpen: true,
       title,
@@ -124,11 +146,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           })).unwrap();
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
-          console.error('노트 Archive 상태 변경 실패:', error);
+          console.error(t('error.archiveFailed'), error);
           setConfirmModal({
             isOpen: true,
-            title: '상태 변경 실패',
-            message: '노트 Archive 상태 변경에 실패했습니다. 다시 시도해주세요.',
+            title: t('error.archiveFailed'),
+            message: t('error.retryMessage'),
             variant: 'danger',
             type: 'alert',
             onConfirm: () => {
@@ -145,8 +167,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   const handleRestore = () => {
     setConfirmModal({
       isOpen: true,
-      title: '노트 복원',
-      message: '이 노트를 복원하시겠습니까?',
+      title: t('modal.title.restoreNote'),
+      message: t('message.restoreConfirm'),
       variant: 'success',
       onConfirm: async () => {
         try {
@@ -156,11 +178,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           })).unwrap();
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
-          console.error('노트 복원 실패:', error);
+          console.error(t('error.restoreFailed'), error);
           setConfirmModal({
             isOpen: true,
-            title: '복원 실패',
-            message: '노트 복원에 실패했습니다. 다시 시도해주세요.',
+            title: t('error.restoreFailed'),
+            message: t('error.retryMessage'),
             variant: 'danger',
             type: 'alert',
             onConfirm: () => {
@@ -175,10 +197,9 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
 
   // 노트 고정/고정 해제 처리
   const handlePin = () => {
-    const action = note.pinned ? '고정을 해제' : '고정';
-    const title = note.pinned ? '고정 해제' : '노트 고정';
-    const message = `이 노트를 ${action}하시겠습니까?`;
-    
+    const title = note.pinned ? t('modal.title.unpinNote') : t('modal.title.pinNote');
+    const message = note.pinned ? t('message.unpinConfirm') : t('message.pinConfirm');
+
     setConfirmModal({
       isOpen: true,
       title,
@@ -192,11 +213,11 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           })).unwrap();
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
-          console.error('노트 고정 상태 변경 실패:', error);
+          console.error(t('error.pinFailed'), error);
           setConfirmModal({
             isOpen: true,
-            title: '고정 상태 변경 실패',
-            message: '노트 고정 상태 변경에 실패했습니다. 다시 시도해주세요.',
+            title: t('error.pinFailed'),
+            message: t('error.retryMessage'),
             variant: 'danger',
             type: 'alert',
             onConfirm: () => {
@@ -213,64 +234,33 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   const openInViewMode = () => setModalConfig({ isOpen: true, mode: 'view' });
   const openInEditMode = () => setModalConfig({ isOpen: true, mode: 'edit' });
 
-  // 날짜 포맷팅 (브라우저 로케일 및 시간대 기준)
+  // 날짜 포맷팅 (timeago.js 활용)
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'Invalid Date';
-      
-      // 브라우저의 로케일과 시간대 설정을 자동 감지
-      const userLocale = navigator.language || 'ko-KR';
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      
-      // 로케일에 따른 날짜 포맷팅 옵션 설정
-      let dateOptions: Intl.DateTimeFormatOptions;
-      
-      if (userLocale.startsWith('ko')) {
-        // 한국어: YY. MM. DD 형식
-        dateOptions = {
-          year: '2-digit',
-          month: '2-digit',
-          day: '2-digit',
-          timeZone: userTimeZone
-        };
-      } else if (userLocale.startsWith('ja')) {
-        // 일본어: YYYY/MM/DD 형식
-        dateOptions = {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          timeZone: userTimeZone
-        };
-      } else if (userLocale.startsWith('zh')) {
-        // 중국어: YYYY/MM/DD 형식
-        dateOptions = {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          timeZone: userTimeZone
-        };
-      } else if (userLocale.startsWith('en')) {
-        // 영어: MM/DD/YY 형식 (미국식)
-        dateOptions = {
-          year: '2-digit',
-          month: '2-digit',
-          day: '2-digit',
-          timeZone: userTimeZone
-        };
+
+      // 현재 시간과의 차이 계산
+      const now = new Date();
+      const diffInMs = now.getTime() - date.getTime();
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+      // 7일 이내면 timeago.js로 상대적 시간 표시, 그 외에는 절대 날짜 표시
+      if (diffInDays <= 7) {
+        const locale = currentLanguage === 'en' ? 'en_short' : currentLanguage;
+        return format(date, locale);
       } else {
-        // 기타 로케일: 기본 형식
-        dateOptions = {
-          year: 'numeric',
+        // 7일 초과시 절대 날짜 표시 (현재 언어에 맞는 형식)
+        const userLocale = currentLanguage === 'ko' ? 'ko-KR' : 'en-US';
+        const dateOptions: Intl.DateTimeFormatOptions = {
+          year: '2-digit',
           month: '2-digit',
-          day: '2-digit',
-          timeZone: userTimeZone
+          day: '2-digit'
         };
+        return date.toLocaleDateString(userLocale, dateOptions);
       }
-      
-      return date.toLocaleDateString(userLocale, dateOptions);
     } catch (error) {
-      console.error('날짜 포맷팅 오류:', error);
+      console.error(t('error.dateFormatFailed'), error);
       return 'Invalid Date';
     }
   };
@@ -279,22 +269,24 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'Invalid Time';
-      
-      // timeago.js로 한국어 상대적 시간 표시
-      return format(date, 'ko');
+
+      // timeago.js로 현재 언어에 맞는 상대적 시간 표시
+      // 영문의 경우 짧은 형태 사용
+      const locale = currentLanguage === 'en' ? 'en_short' : currentLanguage;
+      return format(date, locale);
     } catch (error) {
-      console.error('시간 포맷팅 오류:', error);
+      console.error(t('error.timeFormatFailed'), error);
       return 'Invalid Time';
     }
   };
 
-  // 우선순위 텍스트 변환 (한국어)
+  // 우선순위 텍스트 변환 (다국어)
   const getPriorityText = (priority: string) => {
     switch (priority) {
-      case 'low': return '낮음';
-      case 'medium': return '보통';
-      case 'high': return '높음';
-      default: return '보통';
+      case 'low': return t('label.priority.low');
+      case 'medium': return t('label.priority.medium');
+      case 'high': return t('label.priority.high');
+      default: return t('label.priority.medium');
     }
   };
 
@@ -309,13 +301,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   };
 
   return (
-    <div 
-      className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden flex flex-col ${
-        isSelectionMode && isSelected 
-          ? 'selected' 
+    <div
+      className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden flex flex-col ${isSelectionMode && isSelected
+          ? 'selected'
           : 'border-gray-100'
-      }`}
-      style={{ 
+        }`}
+      style={{
         backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
         minHeight: '200px'
       }}
@@ -347,18 +338,17 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
             <button
               onClick={(e) => { e.stopPropagation(); if (!note.deleted) handlePin(); }}
               disabled={note.deleted}
-              className={`p-1 rounded transition-colors duration-200 ${
-                note.deleted
+              className={`p-1 rounded transition-colors duration-200 ${note.deleted
                   ? 'text-gray-300 cursor-not-allowed' // trash에서는 비활성화
-                  : note.pinned 
-                    ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
+                  : note.pinned
+                    ? 'text-red-500 hover:text-red-600 hover:bg-red-50'
                     : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-              }`}
-              title={note.deleted ? "Trash에서는 고정 상태를 변경할 수 없습니다" : (note.pinned ? "고정 해제" : "고정")}
+                }`}
+              title={note.deleted ? t('message.untagged') : (note.pinned ? t('button.deselect') : t('button.select'))}
             >
-              <Pin 
-                className="w-4 h-4" 
-                fill={note.pinned ? "currentColor" : "none"} 
+              <Pin
+                className="w-4 h-4"
+                fill={note.pinned ? "currentColor" : "none"}
               />
             </button>
           </div>
@@ -388,34 +378,34 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
 
         {/* 하단: 날짜/시간(왼쪽) + 액션 버튼들(오른쪽) */}
         <div className="flex items-center justify-between text-xs text-gray-500 pt-1.5 border-t border-gray-100 flex-shrink-0">
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1">
-              <Calendar size={14} />
-              <span>생성: {formatDate(note.createdAt)}</span>
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
+            <div className="flex items-center space-x-1 min-w-0">
+              <Calendar size={14} className="flex-shrink-0" />
+              <span className="truncate">{t('label.createdAt')}: {formatDate(note.createdAt)}</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <span>•</span>
-              <span>수정: {formatTime(note.updatedAt)}</span>
+            <div className="flex items-center space-x-1 min-w-0">
+              <span className="flex-shrink-0">•</span>
+              <span className="truncate">{t('label.updatedAt')}: {formatTime(note.updatedAt)}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             {note.deleted ? (
               // Trash에 있는 노트의 버튼들
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRestore(); }}
                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
-                  title="복원"
+                  title={t('button.restore')}
                 >
                   <RotateCcw size={14} />
                 </button>
-                                 <button
-                   onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
-                   title="완전 삭제"
-                 >
-                   <Trash2 size={14} />
-                 </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                  className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
+                  title={t('modal.title.permanentDelete')}
+                >
+                  <Trash2 size={14} />
+                </button>
               </>
             ) : (
               // 일반 노트의 버튼들
@@ -423,21 +413,21 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
                 <button
                   onClick={(e) => { e.stopPropagation(); openInEditMode(); }}
                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
-                  title="수정"
+                  title={t('button.edit')}
                 >
                   <Edit size={14} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
-                  title="삭제"
+                  title={t('button.delete')}
                 >
                   <Trash2 size={14} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleArchive(); }}
                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
-                  title={note.archived ? "Archive 해제" : "Archive"}
+                  title={note.archived ? t('button.restore') : t('button.archive')}
                 >
                   {note.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                 </button>

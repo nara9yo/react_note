@@ -1,12 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { 
-  fetchNotesAPI, 
-  addNoteAPI, 
-  deleteNoteAPI, 
-  updateNoteAPI 
+import {
+  fetchNotesAPI,
+  addNoteAPI,
+  deleteNoteAPI,
+  updateNoteAPI
 } from './notesAPI';
 import type { Note, CreateNoteData, UpdateNoteData, NotesState } from '../../types';
+import i18n from '../../i18n';
 
 // 초기 상태
 const initialState: NotesState = {
@@ -78,9 +79,9 @@ const notesSlice = createSlice({
       })
       .addCase(fetchNotes.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || '노트를 불러오는데 실패했습니다.';
+        state.error = action.error.message || i18n.t('message.loadNotesFailed');
       })
-      
+
       // addNewNote
       .addCase(addNewNote.pending, (state) => {
         state.status = 'loading';
@@ -93,9 +94,9 @@ const notesSlice = createSlice({
       })
       .addCase(addNewNote.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || '노트 추가에 실패했습니다.';
+        state.error = action.error.message || i18n.t('message.createFailed');
       })
-      
+
       // deleteNote
       .addCase(deleteNote.pending, (state) => {
         state.status = 'loading';
@@ -108,9 +109,9 @@ const notesSlice = createSlice({
       })
       .addCase(deleteNote.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || '노트 삭제에 실패했습니다.';
+        state.error = action.error.message || i18n.t('message.deleteFailed');
       })
-      
+
       // updateNote
       .addCase(updateNote.pending, (state) => {
         state.status = 'loading';
@@ -126,7 +127,7 @@ const notesSlice = createSlice({
       })
       .addCase(updateNote.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message || '노트 수정에 실패했습니다.';
+        state.error = action.error.message || i18n.t('message.updateFailed');
       });
   },
 });
@@ -138,7 +139,7 @@ export const { clearNotes, clearError } = notesSlice.actions;
 export const selectAllNotes = (state: { notes: NotesState }) => state.notes.notes;
 export const selectNotesStatus = (state: { notes: NotesState }) => state.notes.status;
 export const selectNotesError = (state: { notes: NotesState }) => state.notes.error;
-export const selectNoteById = (state: { notes: NotesState }, noteId: string) => 
+export const selectNoteById = (state: { notes: NotesState }, noteId: string) =>
   state.notes.notes.find(note => note.id === noteId);
 
 export default notesSlice.reducer;
