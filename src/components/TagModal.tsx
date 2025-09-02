@@ -365,7 +365,7 @@ const TagModal: React.FC<TagModalProps> = ({
   return (
     <div
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000
-                 max-sm:items-stretch max-sm:justify-stretch"
+                 max-sm:items-stretch max-sm:justify-stretch overscroll-contain touch-pan-y"
     >
       {/* 모달 컨텐츠 */}
       <div

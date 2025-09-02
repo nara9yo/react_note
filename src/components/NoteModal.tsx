@@ -41,6 +41,23 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
 
+  // 모바일에서 모달 오픈 시 배경 스크롤 잠금
+  useEffect(() => {
+    if (!isOpen) return;
+    const style = document.body.style as CSSStyleDeclaration & { overscrollBehavior?: string };
+    const prevOverflow = style.overflow;
+    const prevTouchAction = (style as unknown as { touchAction?: string }).touchAction || '';
+    const prevOverscroll = (style as unknown as { overscrollBehavior?: string }).overscrollBehavior || '';
+    document.body.style.overflow = 'hidden';
+    (style as unknown as { overscrollBehavior?: string }).overscrollBehavior = 'none';
+    (style as unknown as { touchAction?: string }).touchAction = 'none';
+    return () => {
+      document.body.style.overflow = prevOverflow || '';
+      (style as unknown as { overscrollBehavior?: string }).overscrollBehavior = prevOverscroll || '';
+      (style as unknown as { touchAction?: string }).touchAction = prevTouchAction || '';
+    };
+  }, [isOpen]);
+
   // Confirm 모달 상태
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -259,7 +276,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   return (
     <div
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999
-                 max-sm:items-stretch max-sm:justify-stretch"
+                 max-sm:items-stretch max-sm:justify-stretch overscroll-contain touch-pan-y"
     >
       {/* 모달 컨텐츠 */}
       <div
