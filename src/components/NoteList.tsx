@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError, updateNote, deleteNote } from '../features/notes/notesSlice';
 import NoteCard from './NoteCard';
+import ConfirmModal from './ConfirmModal';
 import type { Note } from '../types';
 import { Loader2, AlertCircle, FileText, Pin, SortAsc, SortDesc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore } from 'lucide-react';
 
@@ -19,6 +20,21 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
+  
+  // Confirm 모달 상태
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'danger' | 'warning' | 'info' | 'success';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info',
+    onConfirm: () => {}
+  });
 
   // 컴포넌트 마운트 시 노트 목록 불러오기
   useEffect(() => {
@@ -106,63 +122,107 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   };
 
   // 선택된 노트 복구
-  const handleRestoreSelected = async () => {
-    try {
-      await Promise.all(
-        selectedNotes.map(noteId => 
-          dispatch(updateNote({ id: noteId, deleted: false })).unwrap()
-        )
-      );
-      setSelectedNotes([]);
-      setIsSelectionMode(false);
-    } catch (error) {
-      console.error('노트 복구 실패:', error);
-    }
+  const handleRestoreSelected = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: '노트 복구',
+      message: `선택된 ${selectedNotes.length}개의 노트를 복구하시겠습니까?`,
+      variant: 'success',
+      onConfirm: async () => {
+        try {
+          await Promise.all(
+            selectedNotes.map(noteId => 
+              dispatch(updateNote({ id: noteId, deleted: false })).unwrap()
+            )
+          );
+          setSelectedNotes([]);
+          setIsSelectionMode(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 복구 실패:', error);
+          alert('노트 복구에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   // 선택된 노트 완전 삭제 (Trash용)
-  const handleDeleteSelected = async () => {
-    try {
-      await Promise.all(
-        selectedNotes.map(noteId => 
-          dispatch(deleteNote(noteId)).unwrap()
-        )
-      );
-      setSelectedNotes([]);
-      setIsSelectionMode(false);
-    } catch (error) {
-      console.error('노트 삭제 실패:', error);
-    }
+  const handleDeleteSelected = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: '완전 삭제',
+      message: `선택된 ${selectedNotes.length}개의 노트를 완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await Promise.all(
+            selectedNotes.map(noteId => 
+              dispatch(deleteNote(noteId)).unwrap()
+            )
+          );
+          setSelectedNotes([]);
+          setIsSelectionMode(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 삭제 실패:', error);
+          alert('노트 삭제에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   // 선택된 노트 Trash로 이동 (Archive용)
-  const handleMoveToTrashSelected = async () => {
-    try {
-      await Promise.all(
-        selectedNotes.map(noteId => 
-          dispatch(updateNote({ id: noteId, deleted: true })).unwrap()
-        )
-      );
-      setSelectedNotes([]);
-      setIsSelectionMode(false);
-    } catch (error) {
-      console.error('노트 Trash 이동 실패:', error);
-    }
+  const handleMoveToTrashSelected = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Trash로 이동',
+      message: `선택된 ${selectedNotes.length}개의 노트를 Trash로 이동하시겠습니까?`,
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          await Promise.all(
+            selectedNotes.map(noteId => 
+              dispatch(updateNote({ id: noteId, deleted: true })).unwrap()
+            )
+          );
+          setSelectedNotes([]);
+          setIsSelectionMode(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 Trash 이동 실패:', error);
+          alert('노트 Trash 이동에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
-  // 선택된 노트 보관 해제 (Archive용)
-  const handleUnarchiveSelected = async () => {
-    try {
-      await Promise.all(
-        selectedNotes.map(noteId => 
-          dispatch(updateNote({ id: noteId, archived: false })).unwrap()
-        )
-      );
-      setSelectedNotes([]);
-      setIsSelectionMode(false);
-    } catch (error) {
-      console.error('노트 보관 해제 실패:', error);
-    }
+  // 선택된 노트 Archive 해제 (Archive용)
+  const handleUnarchiveSelected = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Archive 해제',
+      message: `선택된 ${selectedNotes.length}개의 노트를 Archive 해제하시겠습니까?`,
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          await Promise.all(
+            selectedNotes.map(noteId => 
+              dispatch(updateNote({ id: noteId, archived: false })).unwrap()
+            )
+          );
+          setSelectedNotes([]);
+          setIsSelectionMode(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 Archive 해제 실패:', error);
+          alert('노트 Archive 해제에 실패했습니다.');
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
   };
 
   // 로딩 상태
@@ -197,7 +257,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
     const emptyMessage = selectedTag 
       ? `"${selectedTag}" 태그의 노트가 없습니다.`
       : currentView === 'archive' 
-        ? '보관된 노트가 없습니다.'
+        ? 'Archive된 노트가 없습니다.'
         : currentView === 'trash'
           ? 'Trash가 비어있습니다.'
           : '노트가 없습니다.';
@@ -275,7 +335,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                           className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
                         >
                           <ArchiveRestore size={14} />
-                          보관 해제 ({selectedNotes.length})
+                          Archive 해제 ({selectedNotes.length})
                         </button>
                         <button
                           onClick={handleMoveToTrashSelected}
@@ -348,6 +408,16 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           </div>
         </div>
       )}
+
+      {/* Confirm 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

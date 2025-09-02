@@ -85,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   // 전체 노트 개수 (active notes만)
   const totalNotesCount = notes.filter(note => !note.archived && !note.deleted).length;
 
-  // 보관된 노트 개수
+  // Archive된 노트 개수
   const archivedNotesCount = notes.filter(note => note.archived && !note.deleted).length;
 
   // 삭제된 노트 개수

@@ -79,10 +79,10 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     }
   };
 
-  // 노트 보관/보관 해제 처리
+  // 노트 Archive/Archive 해제 처리
   const handleArchive = () => {
-    const action = note.archived ? '보관을 해제' : '보관';
-    const title = note.archived ? '보관 해제' : '노트 보관';
+    const action = note.archived ? 'Archive를 해제' : 'Archive';
+    const title = note.archived ? 'Archive 해제' : '노트 Archive';
     const message = `이 노트를 ${action}하시겠습니까?`;
     
     setConfirmModal({
@@ -95,12 +95,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           await dispatch(updateNote({
             id: note.id,
             archived: !note.archived
-            // pinned 상태는 보관/보관해제와 무관하게 유지
+            // pinned 상태는 Archive/Archive 해제와 무관하게 유지
           })).unwrap();
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
-          console.error('노트 보관 상태 변경 실패:', error);
-          alert('노트 보관 상태 변경에 실패했습니다.');
+          console.error('노트 Archive 상태 변경 실패:', error);
+          alert('노트 Archive 상태 변경에 실패했습니다.');
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -323,7 +323,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
                 <button
                   onClick={(e) => { e.stopPropagation(); handleArchive(); }}
                   className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
-                  title={note.archived ? "보관 해제" : "보관"}
+                  title={note.archived ? "Archive 해제" : "Archive"}
                 >
                   {note.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                 </button>
