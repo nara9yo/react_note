@@ -24,5 +24,4 @@ dist-ssr
 *.sw?
 
 # 참고 파일
-example
 .cursor

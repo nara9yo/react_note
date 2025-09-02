@@ -26,29 +26,14 @@ export const fetchTags = createAsyncThunk(
   'tags/fetchTags',
   async () => {
     try {
-      // 컬렉션 참조 생성
       const tagsCollection = collection(db, TAGS_COLLECTION);
+      const querySnapshot = await getDocs(tagsCollection);
       
-      // 쿼리 실행 전에 오류 처리
-      let querySnapshot;
-      try {
-        querySnapshot = await getDocs(tagsCollection);
-      } catch (queryError) {
-        // BloomFilter 오류나 기타 쿼리 오류 처리
-        if (queryError instanceof Error && queryError.name === 'BloomFilterError') {
-          console.warn('BloomFilter 오류 발생 - 빈 컬렉션으로 처리');
-          return [];
-        }
-        throw queryError; // 다른 오류는 다시 던지기
-      }
-      
-      const tags: Tag[] = [];
-      
-      // 빈 컬렉션인 경우 빈 배열 반환
       if (querySnapshot.empty) {
         return [];
       }
       
+      const tags: Tag[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         tags.push({

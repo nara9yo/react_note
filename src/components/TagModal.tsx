@@ -59,18 +59,13 @@ const TagModal: React.FC<TagModalProps> = ({
           // 태그 로드
           await dispatch(fetchTags()).unwrap();
         } catch (error) {
-          // BloomFilter 오류나 기타 Firestore 오류 처리
-          if (error instanceof Error && error.name === 'BloomFilterError') {
-            console.warn('BloomFilter 오류 발생 - 태그 로드 건너뜀:', error);
-            return;
-          }
           console.error('태그 로드 실패:', error);
         }
       };
       
       loadTags();
     }
-  }, [isOpen, mode, tags.length, dispatch]);
+  }, [isOpen, mode, dispatch]);
 
   // 모든 태그 (Redux store + 노트에서 사용 중인 태그들 + 현재 선택된 태그들)
   const getAllTags = () => {
@@ -373,7 +368,7 @@ const TagModal: React.FC<TagModalProps> = ({
       {/* 모달 컨텐츠 */}
       <div 
         className={`relative bg-white shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden
-                   sm:rounded-xl sm:${isSelectMode ? 'max-w-md' : 'max-w-2xl'}
+                   sm:rounded-xl sm:max-w-2xl
                    max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -404,7 +399,7 @@ const TagModal: React.FC<TagModalProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus-blue focus:outline-none transition-colors duration-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
               placeholder="태그 이름으로 검색"
             />
           </div>
@@ -428,7 +423,7 @@ const TagModal: React.FC<TagModalProps> = ({
                     handleAddNewTag();
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus-blue focus:outline-none transition-colors duration-200"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors duration-200"
                 placeholder="새 태그 이름 입력"
               />
             </div>
@@ -442,7 +437,7 @@ const TagModal: React.FC<TagModalProps> = ({
                 type="color"
                 value={newTagColor}
                 onChange={(e) => setNewTagColor(e.target.value)}
-                className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer ml-2"
+                className="w-10 h-10 rounded border-2 border-gray-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ml-2"
                 title="태그 색상 선택"
               />
             </div>
@@ -450,7 +445,8 @@ const TagModal: React.FC<TagModalProps> = ({
               <button
                 onClick={handleAddNewTag}
                 disabled={!newTagName.trim()}
-                className="px-4 py-2 btn-blue disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 h-10 flex items-center"
+                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 h-10 flex items-center rounded-lg"
+                title="추가"
               >
                 추가
               </button>
@@ -465,7 +461,7 @@ const TagModal: React.FC<TagModalProps> = ({
           </h3>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
               <p className="text-gray-500 text-sm">태그를 불러오는 중...</p>
             </div>
           ) : filteredTags.length === 0 ? (
@@ -482,12 +478,12 @@ const TagModal: React.FC<TagModalProps> = ({
                   <div
                     key={tag.id}
                       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        isSelected ? 'selected' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     onClick={() => handleTagToggle(tag)}
                   >
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
-                      <span className={`font-medium text-sm ${isSelected ? 'selected-text' : 'text-gray-900'}`}>
+                      <span className={`font-medium text-sm ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                         {tag.name}
                       </span>
                     <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
