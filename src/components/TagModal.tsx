@@ -139,7 +139,7 @@ const TagModal: React.FC<TagModalProps> = ({
         
         // 입력 필드 초기화
       setNewTagName('');
-      setNewTagColor('#3b82f6');
+              setNewTagColor('#3b82f6');
       } catch (error) {
         console.error('새 태그 추가 실패:', error);
         setConfirmModal({
@@ -342,7 +342,7 @@ const TagModal: React.FC<TagModalProps> = ({
   const handleClose = useCallback(() => {
     setSearchTerm('');
     setNewTagName('');
-    setNewTagColor('#3b82f6');
+            setNewTagColor('#3b82f6');
     setEditingTag(null);
     setEditName('');
     setEditColor('');
@@ -350,28 +350,16 @@ const TagModal: React.FC<TagModalProps> = ({
     onClose();
   }, [onClose]);
 
-  // ESC 키로 모달 닫기
+  // 모달 열릴 때 body 스크롤 방지
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (editingTag) {
-          handleCancelEdit();
-        } else {
-        handleClose();
-        }
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, editingTag, handleClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -380,13 +368,12 @@ const TagModal: React.FC<TagModalProps> = ({
   return (
     <div 
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000"
-      onClick={handleClose}
     >
       {/* 모달 컨텐츠 */}
       <div 
-        className={`relative bg-white rounded-xl shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden ${
-          isSelectMode ? 'max-w-md' : 'max-w-2xl'
-        }`}
+        className={`relative bg-white shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden
+                   sm:rounded-xl sm:${isSelectMode ? 'max-w-md' : 'max-w-2xl'}
+                   max-sm:mx-0 max-sm:max-h-screen max-sm:rounded-none`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -416,7 +403,7 @@ const TagModal: React.FC<TagModalProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus-blue focus:outline-none transition-colors duration-200"
               placeholder="태그 이름으로 검색"
             />
           </div>
@@ -440,7 +427,7 @@ const TagModal: React.FC<TagModalProps> = ({
                     handleAddNewTag();
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors duration-200"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus-blue focus:outline-none transition-colors duration-200"
                 placeholder="새 태그 이름 입력"
               />
             </div>
@@ -462,7 +449,7 @@ const TagModal: React.FC<TagModalProps> = ({
               <button
                 onClick={handleAddNewTag}
                 disabled={!newTagName.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 h-10 flex items-center"
+                className="px-4 py-2 btn-blue disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 h-10 flex items-center"
               >
                 추가
               </button>
@@ -471,13 +458,13 @@ const TagModal: React.FC<TagModalProps> = ({
         </div>
 
         {/* 태그 목록 */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto flex-1 max-h-[calc(90vh-200px)] sm:max-h-[calc(90vh-200px)] max-sm:max-h-[calc(100vh-200px)]">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
             {isSelectMode ? '사용 가능한 태그' : '기존 태그 관리'}
           </h3>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue mx-auto"></div>
               <p className="text-gray-500 text-sm">태그를 불러오는 중...</p>
             </div>
           ) : filteredTags.length === 0 ? (
@@ -494,12 +481,12 @@ const TagModal: React.FC<TagModalProps> = ({
                   <div
                     key={tag.id}
                       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        isSelected ? 'selected' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     onClick={() => handleTagToggle(tag)}
                   >
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
-                      <span className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
+                      <span className={`font-medium text-sm ${isSelected ? 'selected-text' : 'text-gray-900'}`}>
                         {tag.name}
                       </span>
                     <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>

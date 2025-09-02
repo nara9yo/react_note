@@ -251,7 +251,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     <div 
       className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden flex flex-col ${
         isSelectionMode && isSelected 
-          ? 'border-blue-500 bg-blue-50' 
+          ? 'selected' 
           : 'border-gray-100'
       }`}
       style={{ 
@@ -269,7 +269,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
                 className="p-1 rounded transition-colors duration-200 hover:bg-gray-100"
               >
                 {isSelected ? (
-                  <CheckSquare className="w-5 h-5 text-blue-600" />
+                  <CheckSquare className="w-5 h-5 text-blue" />
                 ) : (
                   <Square className="w-5 h-5 text-gray-400" />
                 )}
@@ -355,7 +355,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); openInEditMode(); }}
-                  className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 text-blue-hover bg-blue-light rounded transition-colors duration-200"
                   title="수정"
                 >
                   <Edit size={14} />
@@ -369,7 +369,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleArchive(); }}
-                  className="p-1 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-600 text-blue-hover bg-blue-light rounded transition-colors duration-200"
                   title={note.archived ? "Archive 해제" : "Archive"}
                 >
                   {note.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}

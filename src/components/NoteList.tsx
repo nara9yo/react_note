@@ -338,7 +338,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-4" />
+        <Loader2 className="w-8 h-8 text-blue animate-spin mb-4" />
         <p className="text-gray-600">노트를 불러오는 중...</p>
       </div>
     );
@@ -395,7 +395,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                 <>
                   <button
                     onClick={toggleSelectAll}
-                    className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                    className="px-3 py-1.5 btn-blue-light rounded text-sm transition-colors duration-200 flex items-center gap-1"
                   >
                     {selectedNotes.length === filteredNotes.length ? <CheckSquare size={14} /> : <Square size={14} />}
                     {selectedNotes.length === filteredNotes.length ? '전체 해제' : '전체 선택'}
@@ -441,7 +441,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                       <>
                         <button
                           onClick={handleUnarchiveSelected}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                          className="px-3 py-1.5 btn-blue-light rounded text-sm transition-colors duration-200 flex items-center gap-1"
                         >
                           <ArchiveRestore size={14} />
                           Archive 해제 ({selectedNotes.length})
@@ -458,7 +458,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                       <>
                         <button
                           onClick={handleArchiveSelected}
-                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                          className="px-3 py-1.5 btn-blue-light rounded text-sm transition-colors duration-200 flex items-center gap-1"
                         >
                           <Archive size={14} />
                           보관 ({selectedNotes.length})

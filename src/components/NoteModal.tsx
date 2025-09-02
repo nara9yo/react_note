@@ -213,45 +213,17 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     onClose();
   }, [onClose]);
 
-  // 외부 클릭 감지하여 모달 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        modalContentRef.current &&
-        !modalContentRef.current.contains(target) &&
-        !(target instanceof Element && target.closest('.portal-modal-root'))
-      ) {
-        handleClose();
-      }
-    };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, handleClose]);
 
-  // ESC 키로 모달 닫기
+  // 모달 열릴 때 body 스크롤 방지
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (!isTagModalOpen) {
-          handleClose();
-        }
-      }
-    };
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, isTagModalOpen, handleClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -264,14 +236,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999"
     >
       {/* 모달 컨텐츠 */}
-      <div 
+            <div
         ref={modalContentRef}
-        className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+        className="relative bg-white shadow-xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col
+                   sm:rounded-lg sm:max-w-2xl
+                   max-sm:mx-0 max-sm:max-h-screen max-sm:rounded-none"
         role="dialog"
         aria-modal="true"
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">{modalTitle}</h2>
           <button
             onClick={handleClose}
@@ -282,7 +256,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         </div>
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-120px)] sm:max-h-[calc(90vh-120px)] max-sm:max-h-[calc(100vh-120px)]">
           {/* 제목 입력 */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -433,7 +407,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           </div>
 
           {/* 버튼 그룹 */}
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end space-x-3 pt-4 flex-shrink-0">
             <button type="button" onClick={handleClose} className="btn-secondary" disabled={isSubmitting}>
               {isReadOnly ? '닫기' : '취소'}
             </button>

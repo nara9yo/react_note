@@ -1,14 +1,67 @@
 @import "tailwindcss";
 
+/* CSS 변수 정의 */
+:root {
+  /* 기본 색상 */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #e5e7eb;
+  --color-secondary-hover: #d1d5db;
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-background: #f9fafb;
+  --color-border: #e5e7eb;
+  
+  /* 태그 기본 색상 */
+  --color-tag-default: #3b82f6;
+  
+  /* 우선순위 색상 */
+  --color-priority-low: #10b981;
+  --color-priority-medium: #f59e0b;
+  --color-priority-high: #ef4444;
+  
+  /* 배경색 옵션 */
+  --color-bg-white: #ffffff;
+  --color-bg-yellow: #fef3c7;
+  --color-bg-blue: #dbeafe;
+  --color-bg-green: #dcfce7;
+  --color-bg-pink: #fce7f3;
+  --color-bg-purple: #f3e8ff;
+  --color-bg-red: #fef2f2;
+  --color-bg-light-yellow: #fefce8;
+  
+  /* 선택 상태 색상 */
+  --color-selection: #eff6ff;
+  
+  /* 인터랙션 색상 */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-900: #1e3a8a;
+  
+  /* 회색 색상 */
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-900: #111827;
+}
+
 /* 커스텀 스타일 */
 body {
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 .btn-primary {
-  background-color: #2563eb;
+  background-color: var(--color-primary);
   color: white;
   font-weight: 500;
   padding: 0.5rem 1rem;
@@ -17,12 +70,12 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: #1d4ed8;
+  background-color: var(--color-primary-hover);
 }
 
 .btn-secondary {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--color-secondary);
+  color: var(--color-text-secondary);
   font-weight: 500;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
@@ -30,12 +83,64 @@ body {
 }
 
 .btn-secondary:hover {
-  background-color: #d1d5db;
+  background-color: var(--color-secondary-hover);
 }
 
 .card {
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   padding: 1.5rem;
+}
+
+/* 커스텀 인터랙션 클래스 */
+.btn-blue {
+  background-color: var(--color-blue-600);
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.btn-blue:hover {
+  background-color: var(--color-blue-700);
+}
+
+.btn-blue-light {
+  background-color: var(--color-blue-100);
+  color: var(--color-blue-700);
+  transition: background-color 0.2s;
+}
+
+.btn-blue-light:hover {
+  background-color: var(--color-blue-200);
+}
+
+.text-blue {
+  color: var(--color-blue-600);
+}
+
+.text-blue-hover:hover {
+  color: var(--color-blue-700);
+}
+
+.bg-blue-light {
+  background-color: var(--color-blue-50);
+}
+
+.border-blue {
+  border-color: var(--color-blue-500);
+}
+
+.focus-blue:focus {
+  --tw-ring-color: var(--color-blue-500);
+  border-color: var(--color-blue-500);
+}
+
+/* 선택 상태 */
+.selected {
+  border-color: var(--color-blue-500);
+  background-color: var(--color-blue-50);
+}
+
+.selected-text {
+  color: var(--color-blue-900);
 }

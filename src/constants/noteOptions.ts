@@ -2,12 +2,12 @@ import type { Priority } from '../types';
 
 // 우선순위 옵션
 export const PRIORITY_OPTIONS: { value: Priority; label: string; color: string }[] = [
-  { value: 'low', label: '낮음', color: '#10b981' },
-  { value: 'medium', label: '보통', color: '#f59e0b' },
-  { value: 'high', label: '높음', color: '#ef4444' },
+  { value: 'low', label: '낮음', color: 'var(--color-priority-low)' },
+  { value: 'medium', label: '보통', color: 'var(--color-priority-medium)' },
+  { value: 'high', label: '높음', color: 'var(--color-priority-high)' },
 ];
 
-// 배경색 옵션
+// 배경색 옵션 (HTML input 요소를 위해 실제 hex 값 사용)
 export const BACKGROUND_COLORS: { value: string; label: string; preview: string }[] = [
   { value: '#ffffff', label: '흰색', preview: '#ffffff' },
   { value: '#fef3c7', label: '노란색', preview: '#fef3c7' },
