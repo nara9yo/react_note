@@ -367,13 +367,14 @@ const TagModal: React.FC<TagModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000"
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000
+                 max-sm:items-stretch max-sm:justify-stretch"
     >
       {/* 모달 컨텐츠 */}
       <div 
         className={`relative bg-white shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden
                    sm:rounded-xl sm:${isSelectMode ? 'max-w-md' : 'max-w-2xl'}
-                   max-sm:mx-0 max-sm:max-h-screen max-sm:rounded-none`}
+                   max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}

@@ -35,6 +35,8 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [showColorDropdown, setShowColorDropdown] = useState(false);
+  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
   
   // Confirm 모달 상태
@@ -82,7 +84,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         if (note.deleted) {
           setModalTitle('노트 보기 (Trash)');
         } else {
-          setModalTitle(mode === 'view' ? '노트 보기' : '노트 수정');
+        setModalTitle(mode === 'view' ? '노트 보기' : '노트 수정');
         }
       }
     } else {
@@ -117,9 +119,9 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           if (note.deleted) {
             setModalTitle('노트 수정 (Trash)');
           } else {
-            setModalTitle('노트 수정');
-          }
+          setModalTitle('노트 수정');
         }
+      }
       }, 100); // 초기 로딩 완료 후 100ms 지연
 
       return () => clearTimeout(timer);
@@ -138,7 +140,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           selectedTags.length > 0;
         
         if (hasChanged && !isDirty) {
-          setIsDirty(true);
+            setIsDirty(true);
         }
       }, 100); // 초기 로딩 완료 후 100ms 지연
 
@@ -225,6 +227,27 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     };
   }, [isOpen]);
 
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if ((showColorDropdown || showPriorityDropdown) && modalContentRef.current) {
+        const target = event.target as Element;
+        if (!modalContentRef.current.contains(target)) {
+          setShowColorDropdown(false);
+          setShowPriorityDropdown(false);
+        }
+      }
+    };
+
+    if (showColorDropdown || showPriorityDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColorDropdown, showPriorityDropdown]);
+
   if (!isOpen) return null;
 
   const finalIsReadOnly = isReadOnly;
@@ -233,14 +256,15 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999"
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999
+                 max-sm:items-stretch max-sm:justify-stretch"
     >
       {/* 모달 컨텐츠 */}
-            <div
+      <div 
         ref={modalContentRef}
         className="relative bg-white shadow-xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col
                    sm:rounded-lg sm:max-w-2xl
-                   max-sm:mx-0 max-sm:max-h-screen max-sm:rounded-none"
+                   max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen"
         role="dialog"
         aria-modal="true"
       >
@@ -306,14 +330,15 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                 태그
               </span>
               {!isReadOnly && (
-                <button
-                  type="button"
-                  onClick={() => setIsTagModalOpen(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  disabled={isSubmitting || finalIsReadOnly}
-                >
-                  태그 관리
-                </button>
+              <button
+                type="button"
+                onClick={() => setIsTagModalOpen(true)}
+                className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-medium rounded-lg border border-blue-200 transition-colors duration-200 flex items-center gap-1"
+                disabled={isSubmitting || finalIsReadOnly}
+              >
+                <TagIcon className="w-3 h-3" />
+                태그 관리
+              </button>
               )}
             </div>
             {/* 선택된 태그 표시 */}
@@ -340,26 +365,73 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
               </div>
             ) : (
               <div className="text-gray-500 text-sm py-2">
-                선택된 태그가 없습니다. 태그 관리를 클릭하여 태그를 선택하세요.
+                태그 관리를 클릭하여 태그를 선택하세요.
               </div>
             )}
           </div>
 
           {/* 우선순위 + 배경색 (한 행 배치) */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-4">
+          <div className="flex flex-row gap-4 items-start">
             {/* 우선순위 */}
-            <div className="md:w-64">
+            <div className="w-32 flex-shrink-0">
               <span className="block text-sm font-medium text-gray-700 mb-2">
                 <Flag className="inline w-4 h-4 mr-1" />
                 우선순위
               </span>
-              <div className="flex gap-2">
+              
+              {/* 모바일: 커스텀 드롭다운 */}
+              <div className="block sm:hidden">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-left flex items-center justify-between"
+                    disabled={isSubmitting || finalIsReadOnly}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded border border-gray-300"
+                        style={{ backgroundColor: PRIORITY_OPTIONS.find(p => p.value === priority)?.color || '#6b7280' }}
+                      />
+                      <span>{PRIORITY_OPTIONS.find(p => p.value === priority)?.label || '우선순위 선택'}</span>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {showPriorityDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                      {PRIORITY_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => {
+                            setPriority(option.value);
+                            setShowPriorityDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
+                        >
+                          <div 
+                            className="w-4 h-4 rounded border border-gray-300"
+                            style={{ backgroundColor: option.color }}
+                          />
+                          <span>{option.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* 데스크톱: 기존 버튼 형태 */}
+              <div className="hidden sm:flex gap-1 flex-wrap">
                 {PRIORITY_OPTIONS.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setPriority(option.value)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors duration-200 ${
                       priority === option.value ? 'text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                     }`}
                     style={{ backgroundColor: priority === option.value ? option.color : undefined }}
@@ -377,13 +449,75 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                 <Palette className="inline w-4 h-4 mr-1" />
                 배경색
               </label>
+              
+              {/* 모바일: 드롭다운 + 커스텀 색상 선택기 */}
+              <div className="block sm:hidden">
+                <div className="flex items-center gap-2">
+                  {/* 드롭다운 */}
+                  <div className="relative flex-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowColorDropdown(!showColorDropdown)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-left flex items-center justify-between"
+                      disabled={isSubmitting || finalIsReadOnly}
+                    >
               <div className="flex items-center gap-2">
+                        <div 
+                          className="w-4 h-4 rounded border border-gray-300"
+                          style={{ backgroundColor: backgroundColor }}
+                        />
+                        <span>{BACKGROUND_COLORS.find(c => c.value === backgroundColor)?.label || '색상 선택'}</span>
+                      </div>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {showColorDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {BACKGROUND_COLORS.map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => {
+                              setBackgroundColor(color.value);
+                              setShowColorDropdown(false);
+                            }}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-sm"
+                          >
+                            <div 
+                              className="w-4 h-4 rounded border border-gray-300"
+                              style={{ backgroundColor: color.preview }}
+                            />
+                            <span>{color.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* 커스텀 색상 선택기 */}
+                  <input
+                    id="backgroundColor"
+                    name="backgroundColor"
+                    type="color"
+                    value={backgroundColor}
+                    onChange={(e) => setBackgroundColor(e.target.value)}
+                    className="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    disabled={isSubmitting || finalIsReadOnly}
+                    title="커스텀 색상 선택"
+                  />
+                </div>
+              </div>
+              
+              {/* 데스크톱: 기존 형태 */}
+              <div className="hidden sm:flex items-center gap-1 flex-wrap">
                 {BACKGROUND_COLORS.map((color) => (
                   <button
                     key={color.value}
                     type="button"
                     onClick={() => setBackgroundColor(color.value)}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
+                    className={`w-6 h-6 rounded border-2 transition-all duration-200 ${
                       backgroundColor === color.value ? 'border-blue-500 scale-110' : 'border-gray-300 hover:border-gray-400'
                     }`}
                     style={{ backgroundColor: color.preview }}

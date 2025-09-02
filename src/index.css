@@ -93,6 +93,32 @@ body {
   padding: 1.5rem;
 }
 
+/* 스크롤바 숨기기 */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* 드롭다운 색상 옵션 스타일 */
+.color-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.color-preview {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+
 /* 커스텀 인터랙션 클래스 */
 .btn-blue {
   background-color: var(--color-blue-600);
