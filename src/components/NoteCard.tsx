@@ -202,13 +202,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
 
   return (
     <div 
-      className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden h-full flex flex-col ${
+      className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden flex flex-col ${
         isSelectionMode && isSelected 
           ? 'border-blue-500 bg-blue-50' 
           : 'border-gray-100'
       }`}
       style={{ 
         backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
+        minHeight: '200px'
       }}
     >
       <div className="p-3 space-y-2 flex-1 flex flex-col cursor-pointer" onClick={openInViewMode}>
