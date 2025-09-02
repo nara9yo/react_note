@@ -25,12 +25,14 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     title: string;
     message: string;
     variant: 'danger' | 'warning' | 'info' | 'success';
+    type?: 'alert' | 'confirm';
     onConfirm: () => void;
   }>({
     isOpen: false,
     title: '',
     message: '',
     variant: 'info',
+    type: 'confirm',
     onConfirm: () => {}
   });
 
@@ -49,7 +51,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
             console.error('노트 완전 삭제 실패:', error);
-            alert('노트 완전 삭제에 실패했습니다.');
+            setConfirmModal({
+              isOpen: true,
+              title: '삭제 실패',
+              message: '노트 완전 삭제에 실패했습니다. 다시 시도해주세요.',
+              variant: 'danger',
+              type: 'alert',
+              onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+              }
+            });
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           }
         }
@@ -71,7 +82,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
             console.error('노트 삭제 실패:', error);
-            alert('노트 삭제에 실패했습니다.');
+            setConfirmModal({
+              isOpen: true,
+              title: '삭제 실패',
+              message: '노트 삭제에 실패했습니다. 다시 시도해주세요.',
+              variant: 'danger',
+              type: 'alert',
+              onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+              }
+            });
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           }
         }
@@ -100,7 +120,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 Archive 상태 변경 실패:', error);
-          alert('노트 Archive 상태 변경에 실패했습니다.');
+          setConfirmModal({
+            isOpen: true,
+            title: '상태 변경 실패',
+            message: '노트 Archive 상태 변경에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -123,7 +152,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 복원 실패:', error);
-          alert('노트 복원에 실패했습니다.');
+          setConfirmModal({
+            isOpen: true,
+            title: '복원 실패',
+            message: '노트 복원에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -150,7 +188,16 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 고정 상태 변경 실패:', error);
-          alert('노트 고정 상태 변경에 실패했습니다.');
+          setConfirmModal({
+            isOpen: true,
+            title: '고정 상태 변경 실패',
+            message: '노트 고정 상태 변경에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -350,6 +397,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
         title={confirmModal.title}
         message={confirmModal.message}
         variant={confirmModal.variant}
+        type={confirmModal.type}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
       />

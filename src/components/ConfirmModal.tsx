@@ -8,8 +8,9 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info' | 'success';
+  type?: 'alert' | 'confirm'; // alert는 확인 버튼만, confirm은 확인/취소 버튼
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void; // alert 타입에서는 선택사항
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -19,6 +20,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmText = '확인',
   cancelText = '취소',
   variant = 'info',
+  type = 'confirm', // 기본값은 confirm
   onConfirm,
   onCancel
 }) => {
@@ -62,7 +64,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   return (
     <div 
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10001"
-      onClick={onCancel}
+      onClick={type === 'confirm' ? onCancel : undefined}
     >
       <div 
         className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all"
@@ -91,12 +93,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         {/* 버튼 영역 */}
         <div className="px-6 pb-6 flex space-x-3 justify-end">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-          >
-            {cancelText}
-          </button>
+          {type === 'confirm' && (
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             onClick={onConfirm}
             className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.confirmButton}`}

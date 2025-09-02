@@ -1,18 +1,22 @@
 import { useState, Suspense, lazy, useEffect } from 'react';
 import { Provider } from 'react-redux';
-import { useAppSelector } from './app/hooks';
+import { useAppSelector, useAppDispatch } from './app/hooks';
 import { store } from './app/store';
 import { selectAllNotes } from './features/notes/notesSlice';
+import { fetchTags, updateAllTagsUsageCount } from './features/tags/tagsSlice';
 import { Plus, BookOpen, Menu, X, Archive, Trash2, Tag as TagIcon } from 'lucide-react';
 
 // 지연 로딩을 위한 컴포넌트
 const NoteList = lazy(() => import('./components/NoteList'));
 const NoteModal = lazy(() => import('./components/NoteModal'));
 const Sidebar = lazy(() => import('./components/Sidebar'));
+const TagModal = lazy(() => import('./components/TagModal'));
 
 function AppContent() {
+  const dispatch = useAppDispatch();
   const notes = useAppSelector(selectAllNotes);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTagManagementOpen, setIsTagManagementOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'notes' | 'archive' | 'trash'>('notes');
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +40,24 @@ function AppContent() {
     
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
+
+  // 앱 시작 시 태그 로드 및 사용량 업데이트
+  useEffect(() => {
+    const initializeTags = async () => {
+      try {
+        // 태그 로드
+        await dispatch(fetchTags()).unwrap();
+        
+        // 태그 사용량 업데이트
+        await dispatch(updateAllTagsUsageCount()).unwrap();
+      } catch (error) {
+        console.error('태그 초기화 실패:', error);
+        // 오류가 발생해도 앱은 계속 실행
+      }
+    };
+
+    initializeTags();
+  }, [dispatch]);
 
   const handleTagSelect = (tag: string | null) => {
     setSelectedTag(tag);
@@ -142,6 +164,7 @@ function AppContent() {
               searchTerm={searchTerm}
               onSearchChange={handleSearch}
               onClose={closeSidebar}
+              onTagManagementOpen={() => setIsTagManagementOpen(true)}
             />
             </div>
           </Suspense>
@@ -218,6 +241,15 @@ function AppContent() {
             onClose={() => setIsModalOpen(false)}
             mode="create"
             preselectedTag={selectedTag}
+          />
+        </Suspense>
+
+        {/* 태그 관리 모달 */}
+        <Suspense fallback={null}>
+          <TagModal
+            isOpen={isTagManagementOpen}
+            onClose={() => setIsTagManagementOpen(false)}
+            mode="manage"
           />
         </Suspense>
     </div>

@@ -4,7 +4,7 @@ import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError, update
 import NoteCard from './NoteCard';
 import ConfirmModal from './ConfirmModal';
 import type { Note } from '../types';
-import { Loader2, AlertCircle, FileText, Pin, SortAsc, SortDesc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pin, SortAsc, SortDesc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore, Archive } from 'lucide-react';
 
 interface NoteListProps {
   selectedTag: string | null;
@@ -27,12 +27,14 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
     title: string;
     message: string;
     variant: 'danger' | 'warning' | 'info' | 'success';
+    type?: 'alert' | 'confirm';
     onConfirm: () => void;
   }>({
     isOpen: false,
     title: '',
     message: '',
     variant: 'info',
+    type: 'confirm',
     onConfirm: () => {}
   });
 
@@ -140,8 +142,16 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 복구 실패:', error);
-          alert('노트 복구에 실패했습니다.');
-          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          setConfirmModal({
+            isOpen: true,
+            title: '복구 실패',
+            message: '노트 복구에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
         }
       }
     });
@@ -166,7 +176,16 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 삭제 실패:', error);
-          alert('노트 삭제에 실패했습니다.');
+          setConfirmModal({
+            isOpen: true,
+            title: '삭제 실패',
+            message: '노트 삭제에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -192,7 +211,16 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 Trash 이동 실패:', error);
-          alert('노트 Trash 이동에 실패했습니다.');
+          setConfirmModal({
+            isOpen: true,
+            title: '이동 실패',
+            message: '노트 Trash 이동에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -218,7 +246,88 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
           console.error('노트 Archive 해제 실패:', error);
-          alert('노트 Archive 해제에 실패했습니다.');
+          setConfirmModal({
+            isOpen: true,
+            title: 'Archive 해제 실패',
+            message: '노트 Archive 해제에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  // Notes 뷰에서 보관 처리
+  const handleArchiveSelected = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: '노트 보관',
+      message: `선택된 ${selectedNotes.length}개의 노트를 보관하시겠습니까?`,
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          for (const noteId of selectedNotes) {
+            await dispatch(updateNote({
+              id: noteId,
+              archived: true
+            })).unwrap();
+          }
+          setSelectedNotes([]);
+          setIsSelectionMode(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 보관 실패:', error);
+          setConfirmModal({
+            isOpen: true,
+            title: '보관 실패',
+            message: '노트 보관에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      }
+    });
+  };
+
+  // Notes 뷰에서 삭제 처리 (Trash로 이동)
+  const handleDeleteFromNotes = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: '노트 삭제',
+      message: `선택된 ${selectedNotes.length}개의 노트를 삭제하시겠습니까? 삭제된 노트는 Trash로 이동됩니다.`,
+      variant: 'warning',
+      onConfirm: async () => {
+        try {
+          for (const noteId of selectedNotes) {
+            await dispatch(updateNote({
+              id: noteId,
+              deleted: true
+            })).unwrap();
+          }
+          setSelectedNotes([]);
+          setIsSelectionMode(false);
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error('노트 삭제 실패:', error);
+          setConfirmModal({
+            isOpen: true,
+            title: '삭제 실패',
+            message: '노트 삭제에 실패했습니다. 다시 시도해주세요.',
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         }
       }
@@ -279,8 +388,8 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
       {/* 상단 헤더 - 정렬 버튼 및 선택 모드 버튼 */}
       {filteredNotes.length > 0 && (
         <div className="flex justify-between items-center">
-                     {/* Trash와 Archive에서 선택 모드 버튼 표시 */}
-           {(currentView === 'trash' || currentView === 'archive') && (
+                     {/* 모든 뷰에서 선택 모드 버튼 표시 */}
+           {(currentView === 'trash' || currentView === 'archive' || currentView === 'notes') && (
             <div className="flex items-center gap-2">
               {isSelectionMode ? (
                 <>
@@ -343,6 +452,23 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                         >
                           <Trash2 size={14} />
                           Trash로 이동 ({selectedNotes.length})
+                        </button>
+                      </>
+                    ) : currentView === 'notes' ? (
+                      <>
+                        <button
+                          onClick={handleArchiveSelected}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
+                        >
+                          <Archive size={14} />
+                          보관 ({selectedNotes.length})
+                        </button>
+                        <button
+                          onClick={handleDeleteFromNotes}
+                          className="px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors duration-200 flex items-center gap-1"
+                        >
+                          <Trash2 size={14} />
+                          삭제 ({selectedNotes.length})
                         </button>
                       </>
                     ) : null}
@@ -415,6 +541,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
         title={confirmModal.title}
         message={confirmModal.message}
         variant={confirmModal.variant}
+        type={confirmModal.type}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
       />

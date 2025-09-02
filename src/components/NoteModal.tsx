@@ -5,6 +5,7 @@ import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../typ
 import { PRIORITY_OPTIONS, BACKGROUND_COLORS, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save, Edit } from 'lucide-react';
 import PortalModal from './PortalModal';
+import ConfirmModal from './ConfirmModal';
 
 // 지연 로딩을 위한 TagModal
 const TagModal = lazy(() => import('./TagModal'));
@@ -35,6 +36,23 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const [modalTitle, setModalTitle] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
+  
+  // Confirm 모달 상태
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    variant: 'danger' | 'warning' | 'info' | 'success';
+    type?: 'alert' | 'confirm';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info',
+    type: 'confirm',
+    onConfirm: () => {}
+  });
 
   // 모달이 열릴 때 상태 초기화
   useEffect(() => {
@@ -53,7 +71,12 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setSelectedTags(note.tags);
         setPriority(note.priority);
         setBackgroundColor(note.backgroundColor);
-        setIsDirty(false); // 수정/보기 모드에서는 처음엔 clean
+        // isDirty는 모달이 처음 열릴 때만 false로 설정
+        if (mode === 'view') {
+          setIsDirty(false); // 보기 모드에서는 처음엔 clean
+        } else if (mode === 'edit') {
+          setIsDirty(true); // 편집 모드에서는 바로 수정 가능
+        }
         
         // Trash에 있는 노트인지 확인하여 타이틀 설정
         if (note.deleted) {
@@ -101,7 +124,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
       return () => clearTimeout(timer);
     }
-  }, [isOpen, mode, isDirty, isReadOnly, note, title, content, priority, backgroundColor, selectedTags]);
+  }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags]);
 
   // 생성 모드에서 내용 변경 시 isDirty 설정
   useEffect(() => {
@@ -121,7 +144,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
       return () => clearTimeout(timer);
     }
-  }, [isOpen, mode, isDirty, title, content, priority, backgroundColor, selectedTags]);
+  }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags]);
 
   // 미리 선택된 태그 처리 (생성 모드에서만)
   useEffect(() => {
@@ -146,7 +169,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim() === '') {
-      alert('제목을 입력해주세요.');
+      setConfirmModal({
+        isOpen: true,
+        title: '입력 오류',
+        message: '제목을 입력해주세요.',
+        variant: 'warning',
+        type: 'alert',
+        onConfirm: () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      });
       return;
     }
     setIsSubmitting(true);
@@ -161,7 +193,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       handleClose();
     } catch (error) {
       console.error(`노트 ${mode === 'create' ? '생성' : '수정'} 실패:`, error);
-      alert(`노트 ${mode === 'create' ? '생성' : '수정'}에 실패했습니다.`);
+      setConfirmModal({
+        isOpen: true,
+        title: `${mode === 'create' ? '생성' : '수정'} 실패`,
+        message: `노트 ${mode === 'create' ? '생성' : '수정'}에 실패했습니다. 다시 시도해주세요.`,
+        variant: 'danger',
+        type: 'alert',
+        onConfirm: () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -415,7 +456,15 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             {mode === 'view' && !isReadOnly && !isDirty && (
               <button 
                 type="button" 
-                onClick={() => setIsDirty(true)}
+                onClick={() => {
+                  setIsDirty(true);
+                  // 모달 타이틀도 수정 모드로 변경
+                  if (note?.deleted) {
+                    setModalTitle('노트 수정 (Trash)');
+                  } else {
+                    setModalTitle('노트 수정');
+                  }
+                }}
                 className="btn-primary flex items-center space-x-2"
                 disabled={isSubmitting}
               >
@@ -423,6 +472,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
                 <span>수정하기</span>
               </button>
             )}
+
             {/* Trash 노트인 경우 수정 불가 안내 메시지 */}
             {isReadOnly && note?.deleted && (
               <div className="flex-1 text-center">
@@ -441,11 +491,23 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           <TagModal
             isOpen={isTagModalOpen}
             onClose={() => setIsTagModalOpen(false)}
+            mode="select"
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}
           />
         </Suspense>
       </PortalModal>
+      
+      {/* Confirm 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        type={confirmModal.type}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

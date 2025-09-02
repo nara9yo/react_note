@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import notesReducer from '../features/notes/notesSlice';
+import tagsReducer from '../features/tags/tagsSlice';
 
 // Redux 스토어 설정
 export const store = configureStore({
   reducer: {
     notes: notesReducer,
+    tags: tagsReducer,
   },
   // 개발 환경에서 Redux DevTools 활성화
   devTools: process.env.NODE_ENV !== 'production',

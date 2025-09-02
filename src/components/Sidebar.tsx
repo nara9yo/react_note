@@ -18,6 +18,7 @@ interface SidebarProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
   onClose?: () => void;
+  onTagManagementOpen: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -27,7 +28,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentView,
   searchTerm,
   onSearchChange,
-  onClose
+  onClose,
+  onTagManagementOpen
 }) => {
   const notes = useAppSelector(selectAllNotes);
 
@@ -238,6 +240,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* 태그 관리 메뉴 */}
+          <div className="p-4 border-t border-yellow-200">
+            <button
+              onClick={onTagManagementOpen}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-yellow-100 text-gray-700 transition-colors duration-200"
+            >
+              <TagIcon size={20} />
+              <span className="font-medium">태그 관리</span>
+            </button>
           </div>
 
           {/* Archive 섹션 */}

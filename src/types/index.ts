@@ -7,6 +7,8 @@ export interface Tag {
   name: string;
   color: string;
   usageCount?: number; // 사용 횟수 (태그 선택 시 표시용)
+  createdAt?: string; // 생성 시간 (ISO 8601 형식)
+  updatedAt?: string; // 수정 시간 (ISO 8601 형식)
 }
 
 // Note 타입 정의
