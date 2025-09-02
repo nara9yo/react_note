@@ -1,6 +1,15 @@
 // 우선순위 타입
 export type Priority = 'low' | 'medium' | 'high';
 
+// 정렬 관련 타입들
+export type PrioritySortOrder = 'low-to-high' | 'high-to-low';
+export type DateSortOrder = 'created' | 'edited';
+
+export interface SortOptions {
+  priority: PrioritySortOrder | null;
+  date: DateSortOrder;
+}
+
 // 태그 타입
 export interface Tag {
   id: string;

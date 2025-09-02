@@ -3,8 +3,9 @@ import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError, updateNote, deleteNote } from '../features/notes/notesSlice';
 import NoteCard from './NoteCard';
 import ConfirmModal from './ConfirmModal';
-import type { Note } from '../types';
-import { Loader2, AlertCircle, FileText, Pin, SortAsc, SortDesc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore, Archive } from 'lucide-react';
+import SortModal from './SortModal';
+import type { Note, SortOptions } from '../types';
+import { Loader2, AlertCircle, FileText, Pin, SortAsc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore, Archive } from 'lucide-react';
 
 interface NoteListProps {
   selectedTag: string | null;
@@ -17,9 +18,35 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   const notes = useAppSelector(selectAllNotes);
   const status = useAppSelector(selectNotesStatus);
   const error = useAppSelector(selectNotesError);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // localStorage에서 정렬 옵션 불러오기
+  const getInitialSortOptions = (): SortOptions => {
+    try {
+      const saved = localStorage.getItem('noteSortOptions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // 유효한 정렬 옵션인지 검증
+        if (parsed && typeof parsed === 'object') {
+          const validPriority = ['low-to-high', 'high-to-low', null].includes(parsed.priority);
+          const validDate = ['created', 'edited'].includes(parsed.date);
+          if (validPriority && validDate) {
+            return parsed;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('저장된 정렬 옵션 불러오기 실패:', error);
+    }
+    // 기본값 반환
+    return {
+      priority: null,
+      date: 'created'
+    };
+  };
+
+  const [sortOptions, setSortOptions] = useState<SortOptions>(getInitialSortOptions);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
+  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
   
   // Confirm 모달 상태
   const [confirmModal, setConfirmModal] = useState<{
@@ -72,17 +99,46 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
       return true;
     });
 
-    // 고정된 노트를 먼저 표시하고, 그 다음 날짜순 정렬
+    // 고정된 노트를 먼저 표시하고, 그 다음 정렬 옵션에 따라 정렬
     filteredNotes.sort((a, b) => {
       // 고정 상태가 다르면 고정된 노트를 먼저
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
       
-      // 고정 상태가 같으면 날짜순 정렬
-      const dateA = new Date(a.updatedAt).getTime();
-      const dateB = new Date(b.updatedAt).getTime();
+      // 고정 상태가 같으면 정렬 옵션에 따라 정렬
       
-      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+      // 1. 우선순위 정렬이 선택된 경우
+      if (sortOptions.priority) {
+        const priorityOrder = { low: 1, medium: 2, high: 3 };
+        const priorityA = priorityOrder[a.priority];
+        const priorityB = priorityOrder[b.priority];
+        
+        if (sortOptions.priority === 'low-to-high') {
+          if (priorityA !== priorityB) return priorityA - priorityB;
+        } else {
+          if (priorityA !== priorityB) return priorityB - priorityA;
+        }
+      }
+      
+      // 2. 날짜 정렬
+      let dateA: number, dateB: number;
+      
+      switch (sortOptions.date) {
+        case 'created':
+          dateA = new Date(a.createdAt).getTime();
+          dateB = new Date(b.createdAt).getTime();
+          break;
+        case 'edited':
+          dateA = new Date(a.updatedAt).getTime();
+          dateB = new Date(b.updatedAt).getTime();
+          break;
+        default:
+          dateA = new Date(a.createdAt).getTime();
+          dateB = new Date(b.createdAt).getTime();
+          break;
+      }
+      
+      return dateB - dateA; // 최신순 정렬
     });
 
     return filteredNotes;
@@ -94,9 +150,21 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   const pinnedNotes = filteredNotes.filter(note => note.pinned);
   const regularNotes = filteredNotes.filter(note => !note.pinned);
 
-  // 정렬 순서 토글
-  const toggleSortOrder = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  // 정렬 모달 열기
+  const openSortModal = () => {
+    setIsSortModalOpen(true);
+  };
+
+  // 정렬 옵션 변경 및 localStorage 저장
+  const handleSortOptionsChange = (options: SortOptions) => {
+    setSortOptions(options);
+    
+    // localStorage에 정렬 옵션 저장
+    try {
+      localStorage.setItem('noteSortOptions', JSON.stringify(options));
+    } catch (error) {
+      console.error('정렬 옵션 저장 실패:', error);
+    }
   };
 
   // 선택 모드 토글
@@ -393,13 +461,13 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
             <div className="flex items-center gap-2">
               {isSelectionMode ? (
                 <>
-                  <button
-                    onClick={toggleSelectAll}
-                    className="px-3 py-1.5 btn-blue-light rounded text-sm transition-colors duration-200 flex items-center gap-1"
-                  >
-                    {selectedNotes.length === filteredNotes.length ? <CheckSquare size={14} /> : <Square size={14} />}
-                    {selectedNotes.length === filteredNotes.length ? '전체 해제' : '전체 선택'}
-                  </button>
+                                     <button
+                     onClick={toggleSelectAll}
+                     className="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded text-sm transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100"
+                   >
+                     {selectedNotes.length === filteredNotes.length ? <CheckSquare size={14} /> : <Square size={14} />}
+                     {selectedNotes.length === filteredNotes.length ? '전체 해제' : '전체 선택'}
+                   </button>
                   <button
                     onClick={toggleSelectionMode}
                     className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition-colors duration-200"
@@ -408,13 +476,13 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={toggleSelectionMode}
-                  className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors duration-200 flex items-center gap-1"
-                >
-                  <CheckSquare size={14} />
-                  선택
-                </button>
+                                 <button
+                   onClick={toggleSelectionMode}
+                   className="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded text-sm hover:bg-gray-100 transition-colors duration-200 flex items-center gap-1"
+                 >
+                   <CheckSquare size={14} />
+                   선택
+                 </button>
               )}
               
                              {/* 선택된 노트가 있을 때 액션 버튼들 */}
@@ -439,13 +507,13 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                      </>
                                        ) : currentView === 'archive' ? (
                       <>
-                        <button
-                          onClick={handleUnarchiveSelected}
-                          className="px-3 py-1.5 btn-blue-light rounded text-sm transition-colors duration-200 flex items-center gap-1"
-                        >
-                          <ArchiveRestore size={14} />
-                          Archive 해제 ({selectedNotes.length})
-                        </button>
+                                                 <button
+                           onClick={handleUnarchiveSelected}
+                           className="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded text-sm transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100"
+                         >
+                           <ArchiveRestore size={14} />
+                           Archive 해제 ({selectedNotes.length})
+                         </button>
                         <button
                           onClick={handleMoveToTrashSelected}
                           className="px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors duration-200 flex items-center gap-1"
@@ -456,20 +524,20 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                       </>
                     ) : currentView === 'notes' ? (
                       <>
-                        <button
-                          onClick={handleArchiveSelected}
-                          className="px-3 py-1.5 btn-blue-light rounded text-sm transition-colors duration-200 flex items-center gap-1"
-                        >
-                          <Archive size={14} />
-                          보관 ({selectedNotes.length})
-                        </button>
-                        <button
-                          onClick={handleDeleteFromNotes}
-                          className="px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 transition-colors duration-200 flex items-center gap-1"
-                        >
-                          <Trash2 size={14} />
-                          삭제 ({selectedNotes.length})
-                        </button>
+                                                 <button
+                           onClick={handleArchiveSelected}
+                           className="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded text-sm transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100"
+                         >
+                           <Archive size={14} />
+                           보관 ({selectedNotes.length})
+                         </button>
+                         <button
+                           onClick={handleDeleteFromNotes}
+                           className="px-3 py-1.5 bg-gray-50 text-gray-700 border border-gray-200 rounded text-sm transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100"
+                         >
+                           <Trash2 size={14} />
+                           삭제 ({selectedNotes.length})
+                         </button>
                       </>
                     ) : null}
                  </div>
@@ -478,10 +546,10 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
           )}
           
           <button
-            onClick={toggleSortOrder}
+            onClick={openSortModal}
             className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300 transition-colors duration-200 flex items-center gap-1"
           >
-            {sortOrder === 'asc' ? <SortAsc size={14} /> : <SortDesc size={14} />}
+            <SortAsc size={14} />
             정렬
           </button>
         </div>
@@ -544,6 +612,14 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
         type={confirmModal.type}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* 정렬 모달 */}
+      <SortModal
+        isOpen={isSortModalOpen}
+        onClose={() => setIsSortModalOpen(false)}
+        sortOptions={sortOptions}
+        onSortOptionsChange={handleSortOptionsChange}
       />
     </div>
   );

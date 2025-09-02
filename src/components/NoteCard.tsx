@@ -4,6 +4,8 @@ import { useAppDispatch } from '../app/hooks';
 import { deleteNote, updateNote } from '../features/notes/notesSlice';
 import { Edit, Trash2, Calendar, Pin, Archive, ArchiveRestore, RotateCcw, CheckSquare, Square } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import { format, register } from 'timeago.js';
+import ko from 'timeago.js/lib/lang/ko';
 
 // 지연 로딩을 위한 NoteModal
 const NoteModal = lazy(() => import('./NoteModal'));
@@ -16,6 +18,9 @@ interface NoteCardProps {
 }
 
 const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle }) => {
+  // timeago.js에 한국어 로케일 등록
+  register('ko', ko);
+  
   const dispatch = useAppDispatch();
   const [modalConfig, setModalConfig] = useState<{ isOpen: boolean; mode: 'view' | 'edit' }>({ isOpen: false, mode: 'view' });
   
@@ -208,23 +213,79 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   const openInViewMode = () => setModalConfig({ isOpen: true, mode: 'view' });
   const openInEditMode = () => setModalConfig({ isOpen: true, mode: 'edit' });
 
-  // 날짜 포맷팅 (이미지 형식: MM/DD/YY H:MM AM/PM)
+  // 날짜 포맷팅 (브라우저 로케일 및 시간대 기준)
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear().toString().slice(-2);
-    return `${month}/${day}/${year}`;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      // 브라우저의 로케일과 시간대 설정을 자동 감지
+      const userLocale = navigator.language || 'ko-KR';
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // 로케일에 따른 날짜 포맷팅 옵션 설정
+      let dateOptions: Intl.DateTimeFormatOptions;
+      
+      if (userLocale.startsWith('ko')) {
+        // 한국어: YY. MM. DD 형식
+        dateOptions = {
+          year: '2-digit',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: userTimeZone
+        };
+      } else if (userLocale.startsWith('ja')) {
+        // 일본어: YYYY/MM/DD 형식
+        dateOptions = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: userTimeZone
+        };
+      } else if (userLocale.startsWith('zh')) {
+        // 중국어: YYYY/MM/DD 형식
+        dateOptions = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: userTimeZone
+        };
+      } else if (userLocale.startsWith('en')) {
+        // 영어: MM/DD/YY 형식 (미국식)
+        dateOptions = {
+          year: '2-digit',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: userTimeZone
+        };
+      } else {
+        // 기타 로케일: 기본 형식
+        dateOptions = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          timeZone: userTimeZone
+        };
+      }
+      
+      return date.toLocaleDateString(userLocale, dateOptions);
+    } catch (error) {
+      console.error('날짜 포맷팅 오류:', error);
+      return 'Invalid Date';
+    }
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // 0시를 12시로 표시
-    return `${hours}:${minutes} ${ampm}`;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Time';
+      
+      // timeago.js로 한국어 상대적 시간 표시
+      return format(date, 'ko');
+    } catch (error) {
+      console.error('시간 포맷팅 오류:', error);
+      return 'Invalid Time';
+    }
   };
 
   // 우선순위 텍스트 변환 (한국어)
@@ -327,9 +388,15 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
 
         {/* 하단: 날짜/시간(왼쪽) + 액션 버튼들(오른쪽) */}
         <div className="flex items-center justify-between text-xs text-gray-500 pt-1.5 border-t border-gray-100 flex-shrink-0">
-          <div className="flex items-center space-x-1">
-            <Calendar size={14} />
-            <span>{formatDate(note.createdAt)} {formatTime(note.updatedAt)}</span>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
+              <Calendar size={14} />
+              <span>생성: {formatDate(note.createdAt)}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span>•</span>
+              <span>수정: {formatTime(note.updatedAt)}</span>
+            </div>
           </div>
           <div className="flex items-center space-x-2">
             {note.deleted ? (
@@ -337,39 +404,39 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleRestore(); }}
-                  className="p-1 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
                   title="복원"
                 >
                   <RotateCcw size={14} />
                 </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                  className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
-                  title="완전 삭제"
-                >
-                  <Trash2 size={14} />
-                </button>
+                                 <button
+                   onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
+                   title="완전 삭제"
+                 >
+                   <Trash2 size={14} />
+                 </button>
               </>
             ) : (
               // 일반 노트의 버튼들
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); openInEditMode(); }}
-                  className="p-1 text-gray-600 text-blue-hover bg-blue-light rounded transition-colors duration-200"
+                  className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
                   title="수정"
                 >
                   <Edit size={14} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                  className="p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                  className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
                   title="삭제"
                 >
                   <Trash2 size={14} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleArchive(); }}
-                  className="p-1 text-gray-600 text-blue-hover bg-blue-light rounded transition-colors duration-200"
+                  className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
                   title={note.archived ? "Archive 해제" : "Archive"}
                 >
                   {note.archived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
