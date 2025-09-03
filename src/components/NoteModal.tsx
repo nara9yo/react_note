@@ -5,6 +5,7 @@ import { addNewNote, updateNote, selectAllNotes } from '../features/notes/notesS
 import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../types';
 import { getPriorityOptions, getBackgroundColors, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save, Edit } from 'lucide-react';
+import RichTextEditor from './RichTextEditor';
 import PortalModal from './PortalModal';
 import ConfirmModal from './ConfirmModal';
 
@@ -28,6 +29,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   // Form state
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [contentDelta, setContentDelta] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [priority, setPriority] = useState<Priority>(DEFAULT_NOTE_DATA.priority);
   const [backgroundColor, setBackgroundColor] = useState(DEFAULT_NOTE_DATA.backgroundColor);
@@ -81,6 +83,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       if (mode === 'create') {
         setTitle('');
         setContent('');
+        setContentDelta('');
         setSelectedTags([]);
         setPriority(DEFAULT_NOTE_DATA.priority);
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
@@ -88,7 +91,20 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setIsDirty(false); // 생성 모드에서는 처음엔 clean
       } else if (note) {
         setTitle(note.title);
-        setContent(note.content);
+        // note.content 이 Delta(JSON)면 Delta 초기화, 아니면 HTML로 초기화
+        try {
+          const parsed = JSON.parse(note.content as unknown as string);
+          if (parsed && typeof parsed === 'object' && parsed.ops) {
+            setContentDelta(note.content as unknown as string);
+            setContent('');
+          } else {
+            setContent(note.content);
+            setContentDelta('');
+          }
+        } catch {
+          setContent(note.content);
+          setContentDelta('');
+        }
         setSelectedTags(note.tags);
         setPriority(note.priority);
         setBackgroundColor(note.backgroundColor);
@@ -111,6 +127,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       setTimeout(() => {
         setTitle('');
         setContent('');
+        setContentDelta('');
         setSelectedTags([]);
         setPriority(DEFAULT_NOTE_DATA.priority);
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
@@ -204,11 +221,12 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     }
     setIsSubmitting(true);
     try {
+      const contentToSave = contentDelta && contentDelta.length > 0 ? contentDelta : content;
       if (mode === 'create') {
-        const noteData: CreateNoteData = { title: title.trim(), content: content.trim(), tags: selectedTags, priority, backgroundColor };
+        const noteData: CreateNoteData = { title: title.trim(), content: contentToSave, tags: selectedTags, priority, backgroundColor };
         await dispatch(addNewNote(noteData)).unwrap();
       } else if ((mode === 'edit' || mode === 'view') && note) {
-        const updateData: UpdateNoteData = { id: note.id, title: title.trim(), content: content.trim(), tags: selectedTags, priority, backgroundColor };
+        const updateData: UpdateNoteData = { id: note.id, title: title.trim(), content: contentToSave, tags: selectedTags, priority, backgroundColor };
         await dispatch(updateNote(updateData)).unwrap();
       }
       handleClose();
@@ -299,7 +317,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         </div>
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-120px)] sm:max-h-[calc(90vh-120px)] max-sm:max-h-[calc(100vh-120px)]">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 p-6 space-y-6 max-h-[calc(90vh-120px)] sm:max-h-[calc(90vh-120px)] max-sm:max-h-[calc(100vh-120px)]">
           {/* 제목 입력 */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -324,18 +342,28 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
               {t('label.content')}
             </label>
             <div
-              className={`border border-gray-300 rounded-lg transition-all duration-200 ${!finalIsReadOnly && 'focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500'
-                }`}
+              className={`border border-gray-300 rounded-lg transition-all duration-200 ${!finalIsReadOnly && 'focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500'}`}
               style={{ backgroundColor: backgroundColor }}
             >
-              <textarea
+              {/* 라벨 연결을 위한 숨김 입력 필드 (자동완성/접근성 경고 방지) */}
+              <input
                 id="content"
+                name="content"
+                type="text"
+                readOnly
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full px-3 py-2 bg-transparent border-0 focus:outline-none resize-none"
+                tabIndex={-1}
+                aria-hidden="true"
+                className="sr-only opacity-0 pointer-events-none absolute h-0 w-0 p-0 m-0"
+              />
+              <RichTextEditor
+                value={content}
+                onChange={setContent}
+                onDeltaChange={setContentDelta}
+                initialDelta={contentDelta}
+                readOnly={isSubmitting || finalIsReadOnly}
                 placeholder={t('placeholder.content')}
-                rows={6}
-                disabled={isSubmitting || finalIsReadOnly}
+                backgroundColor={backgroundColor}
               />
             </div>
           </div>
@@ -391,7 +419,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           {/* 우선순위 + 배경색 (한 행 배치) */}
           <div className="flex flex-row gap-4 items-start">
             {/* 우선순위 */}
-            <div className="w-32 flex-shrink-0">
+            <div className="min-w-[220px] flex-shrink-0">
               <span className="block text-sm font-medium text-gray-700 mb-2">
                 <Flag className="inline w-4 h-4 mr-1" />
                 {t('label.priority')}
@@ -443,7 +471,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
               </div>
 
               {/* 데스크톱: 기존 버튼 형태 */}
-              <div className="hidden sm:flex gap-1 flex-wrap">
+              <div className="hidden sm:flex gap-1 flex-nowrap">
                 {getPriorityOptions().map((option) => (
                   <button
                     key={option.value}

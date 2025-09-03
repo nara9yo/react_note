@@ -46,7 +46,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   register('en', en);
   register('en_short', enShort);
   const [modalConfig, setModalConfig] = useState<{ isOpen: boolean; mode: 'view' | 'edit' }>({ isOpen: false, mode: 'view' });
-
+  
   // Confirm 모달 관련 상태
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -64,7 +64,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     onConfirm: () => { }
   });
 
-  // 노트 삭제 처리 (trash로 이동 또는 완전 삭제)
+    // 노트 삭제 처리 (trash로 이동 또는 완전 삭제)
   const handleDelete = () => {
     if (note.deleted) {
       // 이미 trash에 있는 경우 - 완전 삭제
@@ -131,7 +131,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   const handleArchive = () => {
     const title = note.archived ? t('modal.title.unarchiveNote') : t('modal.title.archiveNote');
     const message = note.archived ? t('message.unarchiveConfirm') : t('message.archiveConfirm');
-
+    
     setConfirmModal({
       isOpen: true,
       title,
@@ -199,7 +199,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   const handlePin = () => {
     const title = note.pinned ? t('modal.title.unpinNote') : t('modal.title.pinNote');
     const message = note.pinned ? t('message.unpinConfirm') : t('message.pinConfirm');
-
+    
     setConfirmModal({
       isOpen: true,
       title,
@@ -239,7 +239,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'Invalid Date';
-
+      
       // 현재 시간과의 차이 계산
       const now = new Date();
       const diffInMs = now.getTime() - date.getTime();
@@ -269,7 +269,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'Invalid Time';
-
+      
       // timeago.js로 현재 언어에 맞는 상대적 시간 표시
       // 영문의 경우 짧은 형태 사용
       const locale = currentLanguage === 'en' ? 'en_short' : currentLanguage;
@@ -301,12 +301,12 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
   };
 
   return (
-    <div
+    <div 
       className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden flex flex-col ${isSelectionMode && isSelected
-          ? 'selected'
+          ? 'selected' 
           : 'border-gray-100'
-        }`}
-      style={{
+      }`}
+      style={{ 
         backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
         minHeight: '200px'
       }}
@@ -340,15 +340,15 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
               disabled={note.deleted}
               className={`p-1 rounded transition-colors duration-200 ${note.deleted
                   ? 'text-gray-300 cursor-not-allowed' // trash에서는 비활성화
-                  : note.pinned
-                    ? 'text-red-500 hover:text-red-600 hover:bg-red-50'
+                  : note.pinned 
+                    ? 'text-red-500 hover:text-red-600 hover:bg-red-50' 
                     : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                }`}
+              }`}
               title={note.deleted ? t('message.untagged') : (note.pinned ? t('button.deselect') : t('button.select'))}
             >
-              <Pin
-                className="w-4 h-4"
-                fill={note.pinned ? "currentColor" : "none"}
+              <Pin 
+                className="w-4 h-4" 
+                fill={note.pinned ? "currentColor" : "none"} 
               />
             </button>
           </div>
@@ -399,13 +399,13 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
                 >
                   <RotateCcw size={14} />
                 </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                  className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
+                                 <button
+                   onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                   className="p-1 text-gray-700 bg-gray-50 border border-gray-200 rounded transition-colors duration-200 hover:bg-gray-100"
                   title={t('modal.title.permanentDelete')}
-                >
-                  <Trash2 size={14} />
-                </button>
+                 >
+                   <Trash2 size={14} />
+                 </button>
               </>
             ) : (
               // 일반 노트의 버튼들

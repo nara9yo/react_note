@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { useLanguage } from '../app/hooks/useLanguage';
 import { updateNote } from '../features/notes/notesSlice';
-import {
-  fetchTags,
-  addTag,
-  updateTag,
+import { 
+  fetchTags, 
+  addTag, 
+  updateTag, 
   deleteTag
 } from '../features/tags/tagsSlice';
 import type { Tag } from '../types';
@@ -20,12 +20,12 @@ interface TagModalProps {
   onTagsChange?: (tags: Tag[]) => void; // select 모드에서만 사용
 }
 
-const TagModal: React.FC<TagModalProps> = ({
-  isOpen,
-  onClose,
-  mode,
-  selectedTags = [],
-  onTagsChange
+const TagModal: React.FC<TagModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  mode, 
+  selectedTags = [], 
+  onTagsChange 
 }) => {
   const dispatch = useAppDispatch();
   const { t } = useLanguage();
@@ -64,7 +64,7 @@ const TagModal: React.FC<TagModalProps> = ({
           console.error(t('error.tagLoadFailed'), error);
         }
       };
-
+      
       loadTags();
     }
   }, [isOpen, mode, tags, dispatch, t]);
@@ -73,7 +73,7 @@ const TagModal: React.FC<TagModalProps> = ({
   const getAllTags = () => {
     const reduxTags = tags;
     const noteTags: Tag[] = [];
-
+    
     // 노트에서 사용 중인 모든 태그 수집
     notes.forEach(note => {
       note.tags.forEach(tag => {
@@ -82,25 +82,25 @@ const TagModal: React.FC<TagModalProps> = ({
         }
       });
     });
-
+    
     // Redux 태그와 노트 태그를 합치되, 중복 제거
     const allTagsMap = new Map<string, Tag>();
-
+    
     // Redux 태그 먼저 추가
     reduxTags.forEach(tag => {
       allTagsMap.set(tag.name, tag);
     });
-
+    
     // 노트 태그 추가 (이름이 같으면 덮어쓰기)
     noteTags.forEach(tag => {
       allTagsMap.set(tag.name, tag);
     });
-
+    
     // 현재 선택된 태그들도 추가 (select 모드에서 임시 태그 포함)
     selectedTags.forEach(tag => {
       allTagsMap.set(tag.name, tag);
     });
-
+    
     return Array.from(allTagsMap.values());
   };
 
@@ -114,29 +114,29 @@ const TagModal: React.FC<TagModalProps> = ({
   // 새 태그 추가
   const handleAddNewTag = async () => {
     const trimmedName = newTagName.trim();
-
+    
     // 중복 검사: Redux store, 노트 태그, 현재 선택된 태그 모두 확인
     const isDuplicate = allTags.find(tag => tag.name === trimmedName) ||
-      selectedTags.find(tag => tag.name === trimmedName);
-
+                       selectedTags.find(tag => tag.name === trimmedName);
+    
     if (trimmedName && !isDuplicate) {
       try {
         // 모든 모드에서 실제 태그 생성 (Redux store에 저장)
         const newTag = await dispatch(addTag({
           name: trimmedName,
-          color: newTagColor,
-          usageCount: 0
+        color: newTagColor,
+        usageCount: 0
         })).unwrap();
-
+      
         // select 모드에서는 생성된 태그를 선택된 태그 목록에 추가
         if (mode === 'select' && onTagsChange) {
-          const updatedTags = [...selectedTags, newTag];
-          onTagsChange(updatedTags);
+      const updatedTags = [...selectedTags, newTag];
+      onTagsChange(updatedTags);
         }
-
+        
         // 입력 필드 초기화
-        setNewTagName('');
-        setNewTagColor('#3b82f6');
+      setNewTagName('');
+              setNewTagColor('#3b82f6');
       } catch (error) {
         console.error(t('error.tagAddFailed'), error);
         setConfirmModal({
@@ -168,7 +168,7 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 선택/해제 (select 모드)
   const handleTagToggle = (tag: Tag) => {
     if (mode !== 'select' || !onTagsChange) return;
-
+    
     const isSelected = selectedTags.find(t => t.id === tag.id);
     let updatedTags: Tag[];
 
@@ -184,7 +184,7 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 편집 시작 (manage 모드)
   const handleStartEdit = (tag: Tag) => {
     if (mode !== 'manage') return;
-
+    
     setEditingTag(tag);
     setEditName(tag.name);
     setEditColor(tag.color);
@@ -193,7 +193,7 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 편집 저장 (manage 모드)
   const handleSaveEdit = () => {
     if (mode !== 'manage' || !editingTag) return;
-
+    
     if (editName.trim() && (editName !== editingTag.name || editColor !== editingTag.color)) {
       // Confirm 모달 표시
       setConfirmModal({
@@ -209,16 +209,16 @@ const TagModal: React.FC<TagModalProps> = ({
               name: editName.trim(),
               color: editColor
             })).unwrap();
-
+            
             // 노트에서 사용 중인 태그도 업데이트
-            const notesToUpdate = notes.filter(note =>
+            const notesToUpdate = notes.filter(note => 
               note.tags.some(tag => tag.id === editingTag.id)
             );
 
             // 각 노트의 태그를 업데이트
             for (const note of notesToUpdate) {
-              const updatedTags = note.tags.map(tag =>
-                tag.id === editingTag.id
+              const updatedTags = note.tags.map(tag => 
+                tag.id === editingTag.id 
                   ? { ...tag, name: editName.trim(), color: editColor }
                   : tag
               );
@@ -233,7 +233,7 @@ const TagModal: React.FC<TagModalProps> = ({
             setEditingTag(null);
             setEditName('');
             setEditColor('');
-
+            
             // Confirm 모달 닫기
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           } catch (error) {
@@ -269,12 +269,12 @@ const TagModal: React.FC<TagModalProps> = ({
   // 태그 삭제 (manage 모드)
   const handleDeleteTag = (tag: Tag) => {
     if (mode !== 'manage') return;
-
+    
     // 실제 사용량을 다시 계산하여 확인
-    const actualUsageCount = notes.filter(note =>
+    const actualUsageCount = notes.filter(note => 
       !note.deleted && !note.archived && note.tags.some(t => t.id === tag.id)
     ).length;
-
+    
     if (actualUsageCount > 0) {
       // 사용 중인 태그 삭제 시도 시 Confirm 모달 표시
       setConfirmModal({
@@ -289,7 +289,7 @@ const TagModal: React.FC<TagModalProps> = ({
       });
       return;
     }
-
+    
     // Confirm 모달 표시
     setConfirmModal({
       isOpen: true,
@@ -299,7 +299,7 @@ const TagModal: React.FC<TagModalProps> = ({
       onConfirm: async () => {
         try {
           // 노트에서 사용 중인 태그 제거
-          const notesToUpdate = notes.filter(note =>
+          const notesToUpdate = notes.filter(note => 
             note.tags.some(noteTag => noteTag.id === tag.id)
           );
 
@@ -315,7 +315,7 @@ const TagModal: React.FC<TagModalProps> = ({
 
           // Redux store에서 태그 삭제
           await dispatch(deleteTag(tag.id)).unwrap();
-
+          
           // Confirm 모달 닫기
           setConfirmModal(prev => ({ ...prev, isOpen: false }));
         } catch (error) {
@@ -339,7 +339,7 @@ const TagModal: React.FC<TagModalProps> = ({
   const handleClose = useCallback(() => {
     setSearchTerm('');
     setNewTagName('');
-    setNewTagColor('#3b82f6');
+            setNewTagColor('#3b82f6');
     setEditingTag(null);
     setEditName('');
     setEditColor('');
@@ -363,12 +363,12 @@ const TagModal: React.FC<TagModalProps> = ({
   const isSelectMode = mode === 'select';
 
   return (
-    <div
+    <div 
       className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000
                  max-sm:items-stretch max-sm:justify-stretch overscroll-contain touch-pan-y"
     >
       {/* 모달 컨텐츠 */}
-      <div
+      <div 
         className={`relative bg-white shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden
                    sm:rounded-xl sm:max-w-2xl
                    max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen`}
@@ -478,34 +478,34 @@ const TagModal: React.FC<TagModalProps> = ({
 
                   if (isSelectMode) {
                     // Select 모드: 태그 선택/해제 UI
-                    return (
-                      <div
-                        key={tag.id}
+                  return (
+                    <div
+                      key={tag.id}
                         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 cursor-pointer transition-all duration-200 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        onClick={() => handleTagToggle(tag)}
-                      >
-                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+                        }`}
+                      onClick={() => handleTagToggle(tag)}
+                    >
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
                         <span className={`font-medium text-sm ${isSelected ? 'text-blue-700' : 'text-gray-900'}`}>
                           {tag.name}
                         </span>
-                        <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
-                        {isSelected && (
-                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    );
+                      <span className="text-xs text-gray-500 flex-shrink-0">({tag.usageCount || 0})</span>
+                      {isSelected && (
+                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  );
                   } else {
                     // Manage 모드: 태그 편집/삭제 UI
                     return (
                       <div
                         key={tag.id}
                         className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 ${isEditing ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                        }`}
                       >
                         {/* 태그 색상 */}
                         <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
@@ -613,7 +613,7 @@ const TagModal: React.FC<TagModalProps> = ({
                 className={`px-6 py-2 rounded-lg transition-colors duration-200 ${isSelectMode
                     ? 'w-full bg-gray-600 text-white hover:bg-gray-700'
                     : 'bg-gray-600 text-white hover:bg-gray-700'
-                  }`}
+                }`}
               >
                 {t('tag.done')}
               </button>
@@ -621,7 +621,7 @@ const TagModal: React.FC<TagModalProps> = ({
           </div>
         </div>
       </div>
-
+      
       {/* Confirm 모달 */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
