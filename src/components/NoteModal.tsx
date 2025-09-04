@@ -111,7 +111,23 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
   // 모달이 열릴 때 상태 초기화
   useEffect(() => {
-    if (isOpen) {
+    // Early return: 모달이 닫힌 경우
+    if (!isOpen) {
+      // 닫힐 때 모든 상태 초기화 (애니메이션 등 고려)
+      setTimeout(() => {
+        setTitle('');
+        setContent('');
+        setContentDelta('');
+        setSelectedTags([]);
+        setPriority(DEFAULT_NOTE_DATA.priority);
+        setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
+        setIsDirty(false);
+        setModalTitle('');
+      }, 200);
+      return;
+    }
+
+    // 생성 모드 처리
       if (mode === 'create') {
         setTitle('');
         setContent('');
@@ -121,8 +137,15 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
         setModalTitle(t('modal.title.newNote'));
         setIsDirty(false); // 생성 모드에서는 처음엔 clean
-      } else if (note) {
+      return;
+    }
+
+    // Early return: 노트가 없는 경우
+    if (!note) return;
+
+    // 편집/보기 모드 처리
         setTitle(note.title);
+    
         // note.content 이 Delta(JSON)면 Delta 초기화, 아니면 HTML로 초기화
         try {
           const parsed = JSON.parse(note.content);
@@ -137,9 +160,11 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           setContent(note.content);
           setContentDelta('');
         }
+    
         setSelectedTags(note.tags);
         setPriority(note.priority);
         setBackgroundColor(note.backgroundColor);
+    
         // isDirty는 모달이 처음 열릴 때만 false로 설정
         if (mode === 'view') {
           setIsDirty(false); // 보기 모드에서는 처음엔 clean
@@ -152,41 +177,36 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
           setModalTitle(t('modal.title.viewNoteTrash'));
         } else {
           setModalTitle(mode === 'view' ? t('modal.title.viewNote') : t('modal.title.editNote'));
-        }
-      }
-    } else {
-      // 닫힐 때 모든 상태 초기화 (애니메이션 등 고려)
-      setTimeout(() => {
-        setTitle('');
-        setContent('');
-        setContentDelta('');
-        setSelectedTags([]);
-        setPriority(DEFAULT_NOTE_DATA.priority);
-        setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
-        setIsDirty(false);
-        setModalTitle('');
-      }, 200);
     }
   }, [isOpen, mode, note, t]);
 
   // 모달 타이틀 업데이트 (언어 변경 시)
   useEffect(() => {
-    if (isOpen) {
+    // Early return: 모달이 닫힌 경우
+    if (!isOpen) return;
+
+    // 생성 모드 처리
       if (mode === 'create') {
         setModalTitle(t('modal.title.newNote'));
-      } else if (note) {
+      return;
+    }
+
+    // Early return: 노트가 없는 경우
+    if (!note) return;
+
+    // 편집/보기 모드 처리
         if (note.deleted) {
           setModalTitle(t('modal.title.viewNoteTrash'));
         } else {
           setModalTitle(mode === 'view' ? t('modal.title.viewNote') : t('modal.title.editNote'));
-        }
-      }
     }
   }, [t, isOpen, mode, note]);
 
   // '보기' 모드에서 내용 변경 시 '수정' 모드로 전환
   useEffect(() => {
-    if (isOpen && mode === 'view' && !isReadOnly && note) {
+    // Early return: 조건이 맞지 않는 경우
+    if (!isOpen || mode !== 'view' || isReadOnly || !note) return;
+
       // 초기 로딩이 완료된 후에만 변경 감지 시작
       const timer = setTimeout(() => {
         const hasChanged = 
@@ -208,12 +228,13 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       }, 100); // 초기 로딩 완료 후 100ms 지연
 
       return () => clearTimeout(timer);
-    }
   }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags, isDirty, t]);
 
   // 생성 모드에서 내용 변경 시 isDirty 설정
   useEffect(() => {
-    if (isOpen && mode === 'create') {
+    // Early return: 조건이 맞지 않는 경우
+    if (!isOpen || mode !== 'create') return;
+
       const timer = setTimeout(() => {
         const hasChanged = 
           title !== '' ||
@@ -228,16 +249,20 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
       }, 100); // 초기 로딩 완료 후 100ms 지연
 
       return () => clearTimeout(timer);
-    }
   }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags, isDirty]);
 
   // 미리 선택된 태그 처리 (생성 모드에서만)
   useEffect(() => {
-    if (isOpen && mode === 'create' && preselectedTag) {
+    // Early return: 조건이 맞지 않는 경우
+    if (!isOpen || mode !== 'create' || !preselectedTag) return;
+
+    // 태그 없음 처리
       if (preselectedTag === 'untagged') {
         setSelectedTags([]);
         return;
       }
+
+    // 미리 선택된 태그 찾기
       let foundTag = undefined as undefined | Tag;
       for (const n of notes) {
         const noteTag = n.tags.find(tag => tag.name === preselectedTag);
@@ -247,17 +272,18 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         }
       }
       setSelectedTags(foundTag ? [foundTag] : []);
-    }
   }, [isOpen, mode, preselectedTag, notes]);
 
   // 모달이 열리고 생성 모드일 때 제목 입력란에 포커스
   useEffect(() => {
-    if (isOpen && mode === 'create') {
-      const timer = setTimeout(() => {
-        titleInputRef.current?.focus();
-      }, 100); // 애니메이션 시간을 고려하여 약간의 지연 후 포커스
-      return () => clearTimeout(timer);
-    }
+    // Early return: 조건이 맞지 않는 경우
+    if (!isOpen || mode !== 'create') return;
+
+    const timer = setTimeout(() => {
+      titleInputRef.current?.focus();
+    }, 100); // 애니메이션 시간을 고려하여 약간의 지연 후 포커스
+    
+    return () => clearTimeout(timer);
   }, [isOpen, mode]);
 
   // 노트 생성/수정 처리

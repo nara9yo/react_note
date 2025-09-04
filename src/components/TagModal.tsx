@@ -69,6 +69,13 @@ const TagModal: React.FC<TagModalProps> = ({
     }
   }, [isOpen, mode, tags, dispatch, t]);
 
+  // 태그의 실제 사용량 계산
+  const getTagUsageCount = (tagId: string): number => {
+    return notes.filter(note => 
+      !note.deleted && !note.archived && note.tags.some(t => t.id === tagId)
+    ).length;
+  };
+
   // 모든 태그 (Redux store + 노트에서 사용 중인 태그들 + 현재 선택된 태그들)
   const getAllTags = () => {
     const reduxTags = tags;
@@ -88,17 +95,28 @@ const TagModal: React.FC<TagModalProps> = ({
     
     // Redux 태그 먼저 추가
     reduxTags.forEach(tag => {
-      allTagsMap.set(tag.name, tag);
+      allTagsMap.set(tag.name, { 
+        ...tag, 
+        usageCount: getTagUsageCount(tag.id) 
+      });
     });
     
     // 노트 태그 추가 (이름이 같으면 덮어쓰기)
     noteTags.forEach(tag => {
-      allTagsMap.set(tag.name, tag);
+      allTagsMap.set(tag.name, { 
+        ...tag, 
+        usageCount: getTagUsageCount(tag.id) 
+      });
     });
     
     // 현재 선택된 태그들도 추가 (select 모드에서 임시 태그 포함)
     selectedTags.forEach(tag => {
-      allTagsMap.set(tag.name, tag);
+      if (!allTagsMap.has(tag.name)) {
+        allTagsMap.set(tag.name, { 
+          ...tag, 
+          usageCount: getTagUsageCount(tag.id) 
+        });
+      }
     });
     
     return Array.from(allTagsMap.values());
@@ -192,71 +210,73 @@ const TagModal: React.FC<TagModalProps> = ({
 
   // 태그 편집 저장 (manage 모드)
   const handleSaveEdit = () => {
+    // Early return: 관리 모드가 아니거나 편집 중인 태그가 없는 경우
     if (mode !== 'manage' || !editingTag) return;
     
-    if (editName.trim() && (editName !== editingTag.name || editColor !== editingTag.color)) {
-      // Confirm 모달 표시
-      setConfirmModal({
-        isOpen: true,
-        title: t('modal.title.tagEdit'),
-        message: t('message.tagEditConfirm', { oldName: editingTag.name, newName: editName.trim() }),
-        variant: 'info',
-        onConfirm: async () => {
-          try {
-            // Redux store에서 태그 업데이트
-            await dispatch(updateTag({
-              id: editingTag.id,
-              name: editName.trim(),
-              color: editColor
-            })).unwrap();
-            
-            // 노트에서 사용 중인 태그도 업데이트
-            const notesToUpdate = notes.filter(note => 
-              note.tags.some(tag => tag.id === editingTag.id)
-            );
-
-            // 각 노트의 태그를 업데이트
-            for (const note of notesToUpdate) {
-              const updatedTags = note.tags.map(tag => 
-                tag.id === editingTag.id 
-                  ? { ...tag, name: editName.trim(), color: editColor }
-                  : tag
-              );
-
-              await dispatch(updateNote({
-                id: note.id,
-                tags: updatedTags
-              })).unwrap();
-            }
-
-            // 편집 상태 초기화
-            setEditingTag(null);
-            setEditName('');
-            setEditColor('');
-            
-            // Confirm 모달 닫기
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-          } catch (error) {
-            console.error(t('error.tagUpdateFailed'), error);
-            setConfirmModal({
-              isOpen: true,
-              title: t('modal.title.editFailed'),
-              message: t('message.tagUpdateFailed'),
-              variant: 'danger',
-              type: 'alert',
-              onConfirm: () => {
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
-              }
-            });
-          }
-        },
-      });
-    } else {
-      // 변경사항이 없으면 편집 상태만 초기화
+    // Early return: 변경사항이 없는 경우
+    if (!editName.trim() || (editName === editingTag.name && editColor === editingTag.color)) {
       setEditingTag(null);
       setEditName('');
       setEditColor('');
+      return;
     }
+
+    // Confirm 모달 표시
+    setConfirmModal({
+      isOpen: true,
+      title: t('modal.title.tagEdit'),
+      message: t('message.tagEditConfirm', { oldName: editingTag.name, newName: editName.trim() }),
+      variant: 'info',
+      onConfirm: async () => {
+        try {
+          // Redux store에서 태그 업데이트
+          await dispatch(updateTag({
+            id: editingTag.id,
+            name: editName.trim(),
+            color: editColor
+          })).unwrap();
+          
+          // 노트에서 사용 중인 태그도 업데이트
+          const notesToUpdate = notes.filter(note => 
+            note.tags.some(tag => tag.id === editingTag.id)
+          );
+
+          // 각 노트의 태그를 업데이트
+          for (const note of notesToUpdate) {
+            const updatedTags = note.tags.map(tag => 
+              tag.id === editingTag.id 
+                ? { ...tag, name: editName.trim(), color: editColor }
+                : tag
+            );
+
+            await dispatch(updateNote({
+              id: note.id,
+              tags: updatedTags
+            })).unwrap();
+          }
+
+          // 편집 상태 초기화
+          setEditingTag(null);
+          setEditName('');
+          setEditColor('');
+          
+          // Confirm 모달 닫기
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error(t('error.tagUpdateFailed'), error);
+          setConfirmModal({
+            isOpen: true,
+            title: t('modal.title.editFailed'),
+            message: t('message.tagUpdateFailed'),
+            variant: 'danger',
+            type: 'alert',
+            onConfirm: () => {
+              setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
+          });
+        }
+      },
+    });
   };
 
   // 태그 편집 취소 (manage 모드)
@@ -268,15 +288,14 @@ const TagModal: React.FC<TagModalProps> = ({
 
   // 태그 삭제 (manage 모드)
   const handleDeleteTag = (tag: Tag) => {
+    // Early return: 관리 모드가 아닌 경우
     if (mode !== 'manage') return;
     
-    // 실제 사용량을 다시 계산하여 확인
-    const actualUsageCount = notes.filter(note => 
-      !note.deleted && !note.archived && note.tags.some(t => t.id === tag.id)
-    ).length;
+    // 실제 사용량 확인
+    const actualUsageCount = getTagUsageCount(tag.id);
     
+    // Early return: 사용 중인 태그인 경우 삭제 차단
     if (actualUsageCount > 0) {
-      // 사용 중인 태그 삭제 시도 시 Confirm 모달 표시
       setConfirmModal({
         isOpen: true,
         title: t('modal.title.tagDeleteBlocked'),

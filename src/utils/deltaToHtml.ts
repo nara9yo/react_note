@@ -60,80 +60,10 @@ export function deltaToHtml(deltaJson: string): string {
       const op = delta.ops[i];
       const nextOp = delta.ops[i + 1];
       
-      if (typeof op.insert === 'string') {
-        const text = op.insert;
-        const attributes = op.attributes || {};
-
-        // 텍스트 서식 적용
-        let formattedText = escapeHtml(text);
-
-        // 인라인 서식
-        if (attributes.bold) formattedText = `<strong>${formattedText}</strong>`;
-        if (attributes.italic) formattedText = `<em>${formattedText}</em>`;
-        if (attributes.underline) formattedText = `<u>${formattedText}</u>`;
-        if (attributes.strike) formattedText = `<s>${formattedText}</s>`;
-        if (attributes.color) formattedText = `<span style="color: ${attributes.color}">${formattedText}</span>`;
-        if (attributes.background) formattedText = `<span style="background-color: ${attributes.background}">${formattedText}</span>`;
-
-        // 링크 처리
-        if (attributes.link) {
-          formattedText = `<a href="${escapeHtml(attributes.link)}" target="_blank" rel="noopener noreferrer">${formattedText}</a>`;
-        }
-
-        // 줄바꿈 처리
-        if (text === '\n') {
-          // 리스트 아이템 처리
-          if (attributes.list) {
-            if (listType !== attributes.list) {
-              // 이전 리스트 종료
-              if (inList && listItems.length > 0) {
-                html += closeList(listType!, listItems);
-                listItems = [];
-              }
-              listType = attributes.list;
-              inList = true;
-            }
-            listItems.push('');
-            continue;
-          } else {
-            // 일반 줄바꿈
-            if (inList) {
-              // 리스트 종료
-              html += closeList(listType!, listItems);
-              listItems = [];
-              inList = false;
-              listType = null;
-            }
-            html += '<br>';
-            continue;
-          }
-        }
-
-        // 다음 operation이 리스트 줄바꿈인지 확인
-        if (nextOp && typeof nextOp.insert === 'string' && nextOp.insert === '\n' && nextOp.attributes?.list) {
-          // 다음이 리스트 아이템이면 현재 텍스트도 리스트 아이템으로 처리
-          if (listType !== nextOp.attributes.list) {
-            // 이전 리스트 종료
-            if (inList && listItems.length > 0) {
-              html += closeList(listType!, listItems);
-              listItems = [];
-            }
-            listType = nextOp.attributes.list;
-            inList = true;
-          }
-          if (listItems.length === 0) listItems.push('');
-          listItems[listItems.length - 1] += formattedText;
-        } else {
-          // 리스트 아이템에 텍스트 추가
-          if (inList && listType) {
-            if (listItems.length === 0) listItems.push('');
-            listItems[listItems.length - 1] += formattedText;
-          } else {
-            html += formattedText;
-          }
-        }
-      } else if (op.insert && typeof op.insert === 'object') {
-        // 이미지, 비디오 등 임베드 처리
+      // Early return: 문자열이 아닌 경우 임베드 처리
+      if (typeof op.insert !== 'string') {
+        if (!op.insert || typeof op.insert !== 'object') continue;
+        
         const insertObj = op.insert as Record<string, string>;
         if (insertObj.image) {
           html += `<img src="${escapeHtml(insertObj.image)}" alt="Image" style="max-width: 100%; height: auto;">`;
@@ -142,12 +72,89 @@ export function deltaToHtml(deltaJson: string): string {
         } else if (insertObj.formula) {
           html += `<span class="formula">${escapeHtml(insertObj.formula)}</span>`;
         }
+        continue;
+      }
+
+      const text = op.insert;
+      const attributes = op.attributes || {};
+
+      // 텍스트 서식 적용
+      let formattedText = escapeHtml(text);
+
+      // 인라인 서식 적용
+      if (attributes.bold) formattedText = `<strong>${formattedText}</strong>`;
+      if (attributes.italic) formattedText = `<em>${formattedText}</em>`;
+      if (attributes.underline) formattedText = `<u>${formattedText}</u>`;
+      if (attributes.strike) formattedText = `<s>${formattedText}</s>`;
+      if (attributes.color) formattedText = `<span style="color: ${attributes.color}">${formattedText}</span>`;
+      if (attributes.background) formattedText = `<span style="background-color: ${attributes.background}">${formattedText}</span>`;
+
+      // 링크 처리
+      if (attributes.link) {
+        formattedText = `<a href="${escapeHtml(attributes.link)}" target="_blank" rel="noopener noreferrer">${formattedText}</a>`;
+      }
+
+      // Early return: 줄바꿈 처리
+      if (text === '\n') {
+        // 리스트 아이템 처리
+        if (attributes.list) {
+          if (listType !== attributes.list) {
+            // 이전 리스트 종료
+            if (inList && listItems.length > 0) {
+              html += closeList(listType!, listItems);
+              listItems = [];
+            }
+            listType = attributes.list;
+            inList = true;
+          }
+          listItems.push('');
+          continue;
+        }
+        
+        // 일반 줄바꿈
+        if (inList) {
+          html += closeList(listType!, listItems);
+          listItems = [];
+          inList = false;
+          listType = null;
+        }
+        html += '<br>';
+        continue;
+      }
+
+      // 텍스트 추가 처리
+      const isNextOpListItem = nextOp && 
+        typeof nextOp.insert === 'string' && 
+        nextOp.insert === '\n' && 
+        nextOp.attributes?.list;
+
+      if (isNextOpListItem && nextOp.attributes) {
+        // 다음이 리스트 아이템인 경우
+        const nextListType = nextOp.attributes.list;
+        if (listType !== nextListType) {
+          if (inList && listItems.length > 0) {
+            html += closeList(listType!, listItems);
+            listItems = [];
+          }
+          listType = nextListType || null;
+          inList = true;
+        }
+        if (listItems.length === 0) listItems.push('');
+        listItems[listItems.length - 1] += formattedText;
+        continue;
+      }
+
+      // 일반 텍스트 추가
+      if (inList && listType) {
+        if (listItems.length === 0) listItems.push('');
+        listItems[listItems.length - 1] += formattedText;
+      } else {
+        html += formattedText;
       }
     }
 
-    // 마지막 리스트 종료 (빈 아이템 제거)
+    // 마지막 리스트 종료
     if (inList && listType && listItems.length > 0) {
-      // 빈 아이템 제거
       const filteredItems = listItems.filter(item => item.trim() !== '');
       if (filteredItems.length > 0) {
         html += closeList(listType, filteredItems);
@@ -201,9 +208,9 @@ export function isValidDelta(deltaJson: string): boolean {
 }
 
 /**
- * Converts content (HTML or Delta JSON) to plain text for searching.
- * @param content - The content string (can be HTML or Delta JSON).
- * @returns Plain text representation of the content.
+ * 콘텐츠(HTML 또는 Delta JSON)를 검색용 일반 텍스트로 변환
+ * @param content - 콘텐츠 문자열 (HTML 또는 Delta JSON)
+ * @returns 콘텐츠의 일반 텍스트 표현
  */
 export function contentToText(content: string): string {
   if (isValidDelta(content)) {
