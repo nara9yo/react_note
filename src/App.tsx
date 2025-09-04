@@ -11,6 +11,8 @@ import { fetchTags, updateAllTagsUsageCount } from './features/tags/tagsSlice';
 import { Plus, BookOpen, Menu, X, Archive, Trash2, Tag as TagIcon } from 'lucide-react';
 // 다국어 훅 import
 import { useLanguage } from './app/hooks/useLanguage';
+// UI 상수 import
+// UI 상수는 이제 CSS 클래스로 관리됨 (index.css 참조)
 
 // 지연 로딩을 위한 컴포넌트들
 // - 코드 스플리팅으로 초기 번들 크기 최적화
@@ -194,11 +196,13 @@ function AppContent() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600"></div>
           </div>
         }>
-          <div className={`
+          <div 
+            className={`
               ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-              ${isMobile ? 'fixed inset-y-0 left-0 z-50' : 'relative'}
-              transition-transform duration-300 ease-in-out
-            `}>
+              ${isMobile ? 'fixed inset-y-0 left-0 z-sidebar-mobile' : 'relative'}
+              transition-transform ease-in-out transition-normal
+            `}
+          >
             <Sidebar
               selectedTag={selectedTag}
               onTagSelect={handleTagSelect}
@@ -216,14 +220,15 @@ function AppContent() {
         {/* - 사이드바 외부 클릭 시 사이드바 닫기 */}
         {isMobile && isSidebarOpen && (
           <div
-            className="fixed inset-0 z-40 md:hidden backdrop-blur-xs"
+            className="fixed inset-0 md:hidden backdrop-blur-xs z-overlay"
             onClick={closeSidebar}
           />
         )}
 
         {/* 메인 콘텐츠 영역 */}
-        <main className={`flex-1 flex flex-col transition-all duration-300 ${isMobile && isSidebarOpen ? 'ml-0' : ''
-          }`}>
+        <main 
+          className={`flex-1 flex flex-col transition-all transition-normal ${isMobile && isSidebarOpen ? 'ml-0' : ''}`}
+        >
           {/* 상단 헤더 */}
           <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="px-4 sm:px-6 lg:px-8">

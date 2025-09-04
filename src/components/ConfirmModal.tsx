@@ -69,7 +69,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10001"
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-confirm-modal"
       onClick={type === 'confirm' ? onCancel : undefined}
     >
       <div

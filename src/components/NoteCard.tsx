@@ -17,8 +17,8 @@ import en from 'timeago.js/lib/lang/en_US';
 // 유틸리티 함수 import
 import { deltaToHtml, isValidDelta } from '../utils/deltaToHtml';
 
-// 노트 카드 내용 표시 줄 수 설정 (기본값)
-const NOTE_CARD_CONTENT_LINES = 3;
+// UI 상수 import
+import { LAYOUT } from '../constants/uiConstants';
 
 // 짧은 형태의 영문 로케일 정의
 // - timeago.js에서 사용할 간단한 영문 시간 표시 형식
@@ -55,7 +55,7 @@ interface NoteCardProps {
 // 개별 노트 카드 컴포넌트
 // - 노트 정보 표시 및 편집/삭제 기능 제공
 // - 선택 모드 지원으로 다중 선택 가능
-const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle, maxContentLines = NOTE_CARD_CONTENT_LINES }) => {
+const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle, maxContentLines = LAYOUT.NOTE_CARD_CONTENT_LINES }) => {
   // Redux 관련 훅들
   const dispatch = useAppDispatch(); // Redux 액션 디스패치 함수
   const { t, currentLanguage } = useLanguage(); // 다국어 번역 함수 및 현재 언어

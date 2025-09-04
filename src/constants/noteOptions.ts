@@ -1,5 +1,6 @@
 import type { Priority } from '../types';
 import i18n from '../i18n';
+import { COLORS } from './uiConstants';
 
 // 우선순위 옵션 (i18n 함수)
 export const getPriorityOptions = (): { value: Priority; label: string; color: string }[] => [
@@ -28,5 +29,5 @@ export const BACKGROUND_COLORS = getBackgroundColors();
 export const DEFAULT_NOTE_DATA = {
   tags: [],
   priority: 'medium' as Priority,
-  backgroundColor: '#ffffff',
+  backgroundColor: COLORS.DEFAULT_BACKGROUND,
 };

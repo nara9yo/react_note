@@ -4,13 +4,14 @@ import { useLanguage } from '../app/hooks/useLanguage';
 import { addNewNote, updateNote, selectAllNotes } from '../features/notes/notesSlice';
 import type { CreateNoteData, UpdateNoteData, Tag, Priority, Note } from '../types';
 import { getPriorityOptions, getBackgroundColors, DEFAULT_NOTE_DATA } from '../constants/noteOptions';
+import { TIMING } from '../constants/uiConstants';
 import { Plus, X, Tag as TagIcon, Flag, Palette, Save, Edit } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 import PortalModal from './PortalModal';
 import ConfirmModal from './ConfirmModal';
 
 // 지연 로딩을 위한 TagModal
-const TagModal = lazy(() => import('./TagModal'));
+const TagModal = lazy(() => import('./TagModal').then(module => ({ default: module.default })));
 
 interface NoteModalProps {
   isOpen: boolean;
@@ -63,7 +64,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   }, [note, mode]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [priority, setPriority] = useState<Priority>(DEFAULT_NOTE_DATA.priority);
-  const [backgroundColor, setBackgroundColor] = useState(DEFAULT_NOTE_DATA.backgroundColor);
+  const [backgroundColor, setBackgroundColor] = useState<string>(DEFAULT_NOTE_DATA.backgroundColor);
 
   // Modal state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,7 +124,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
         setIsDirty(false);
         setModalTitle('');
-      }, 200);
+      }, TIMING.MODAL_ANIMATION_DELAY);
       return;
     }
 
@@ -225,7 +226,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
             setModalTitle(t('modal.title.editNote'));
         }
       }
-      }, 100); // 초기 로딩 완료 후 100ms 지연
+      }, TIMING.CONTENT_CHANGE_DELAY); // 초기 로딩 완료 후 지연
 
       return () => clearTimeout(timer);
   }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags, isDirty, t]);
@@ -246,7 +247,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         if (hasChanged && !isDirty) {
             setIsDirty(true);
         }
-      }, 100); // 초기 로딩 완료 후 100ms 지연
+      }, TIMING.CONTENT_CHANGE_DELAY); // 초기 로딩 완료 후 지연
 
       return () => clearTimeout(timer);
   }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags, isDirty]);
@@ -281,7 +282,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
     const timer = setTimeout(() => {
       titleInputRef.current?.focus();
-    }, 100); // 애니메이션 시간을 고려하여 약간의 지연 후 포커스
+    }, TIMING.FOCUS_DELAY); // 애니메이션 시간을 고려하여 약간의 지연 후 포커스
     
     return () => clearTimeout(timer);
   }, [isOpen, mode]);
@@ -376,13 +377,13 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-9999
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-modal
                  max-sm:items-stretch max-sm:justify-stretch overscroll-contain touch-pan-y"
     >
       {/* 모달 컨텐츠 */}
       <div 
         ref={modalContentRef}
-        className="relative bg-white shadow-xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col
+        className="relative bg-white shadow-xl w-full mx-4 modal-max-height overflow-hidden flex flex-col
                    sm:rounded-lg sm:max-w-2xl
                    max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen"
         role="dialog"

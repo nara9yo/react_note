@@ -11,6 +11,7 @@ import {
 import type { Tag } from '../types';
 import { X, Plus, Search, Tag as TagIcon, Edit2, Trash2, Check } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
+import { COLORS } from '../constants/uiConstants';
 
 interface TagModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const TagModal: React.FC<TagModalProps> = ({
   const { tags, loading } = useAppSelector((state) => state.tags);
   const [searchTerm, setSearchTerm] = useState('');
   const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#3b82f6');
+  const [newTagColor, setNewTagColor] = useState<string>(COLORS.DEFAULT_TAG_COLOR);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
@@ -154,7 +155,7 @@ const TagModal: React.FC<TagModalProps> = ({
         
         // 입력 필드 초기화
       setNewTagName('');
-              setNewTagColor('#3b82f6');
+              setNewTagColor(COLORS.DEFAULT_TAG_COLOR);
       } catch (error) {
         console.error(t('error.tagAddFailed'), error);
         setConfirmModal({
@@ -383,14 +384,14 @@ const TagModal: React.FC<TagModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-10000
+      className="fixed inset-0 flex items-center justify-center backdrop-blur-xs z-tag-modal
                  max-sm:items-stretch max-sm:justify-stretch overscroll-contain touch-pan-y"
     >
       {/* 모달 컨텐츠 */}
       <div 
-        className={`relative bg-white shadow-xl w-full mx-4 max-h-[90vh] flex flex-col overflow-hidden
+        className="relative bg-white shadow-xl w-full mx-4 modal-max-height flex flex-col overflow-hidden
                    sm:rounded-xl sm:max-w-2xl
-                   max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen`}
+                   max-sm:mx-0 max-sm:my-0 max-sm:max-h-screen max-sm:max-w-none max-sm:rounded-none max-sm:h-screen max-sm:w-screen"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type QuillType from 'quill';
+import { TIMING } from '../constants/uiConstants';
 
 interface RichTextEditorProps {
     value: string;
@@ -147,7 +148,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 });
             };
             // run once and observe future mutations
-            setTimeout(addA11yAttributes, 0);
+            setTimeout(addA11yAttributes, TIMING.IMMEDIATE);
             const observer = new MutationObserver(addA11yAttributes);
             if (root) observer.observe(root, { childList: true, subtree: true });
             observerRef.current = observer;

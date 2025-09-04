@@ -39,6 +39,30 @@
   /* - 사용자 인터랙션 시 선택된 요소의 색상 */
   --color-selection: #eff6ff;
 
+  /* ===== 레이아웃 상수 ===== */
+  /* 그리드 설정 */
+  --note-card-min-width: 300px;      /* 노트 카드 최소 폭 */
+  --modal-max-height: 90vh;           /* 모달 최대 높이 */
+  
+  /* ===== 시간 상수 ===== */
+  /* 트랜지션 시간 */
+  --transition-fast: 200ms;           /* 빠른 트랜지션 */
+  --transition-normal: 300ms;         /* 일반 트랜지션 */
+  --transition-slow: 500ms;           /* 느린 트랜지션 */
+  
+  /* ===== z-index 계층 관리 ===== */
+  --z-base: 1;                        /* 기본 레이어 */
+  --z-dropdown: 10;                   /* 드롭다운 */
+  --z-tooltip: 20;                    /* 툴팁 */
+  --z-overlay: 40;                    /* 오버레이 */
+  --z-sidebar-mobile: 50;             /* 모바일 사이드바 */
+  --z-sort-modal: 50;                 /* 정렬 모달 */
+  --z-modal: 9999;                    /* 일반 모달 */
+  --z-modal-backdrop: 9998;           /* 모달 배경 */
+  --z-toast: 10000;                   /* 토스트 알림 */
+  --z-tag-modal: 10000;               /* 태그 모달 (최상위) */
+  --z-confirm-modal: 10001;           /* 확인 모달 (최상위) */
+
   /* 인터랙션 색상 팔레트 */
   /* - 버튼, 링크 등 인터랙티브 요소들의 색상 */
   --color-blue-50: #eff6ff; /* 매우 연한 파란색 */
@@ -298,4 +322,29 @@ body {
   margin: 0 !important; /* 외부 여백 제거 */
   padding: 0 !important; /* 내부 여백 제거 */
   display: list-item !important; /* 리스트 아이템으로 표시 */
+}
+
+/* ===== 유틸리티 클래스 ===== */
+/* 트랜지션 관련 클래스 */
+.transition-fast { transition-duration: var(--transition-fast); }
+.transition-normal { transition-duration: var(--transition-normal); }
+.transition-slow { transition-duration: var(--transition-slow); }
+
+/* z-index 관련 클래스 */
+.z-base { z-index: var(--z-base); }
+.z-dropdown { z-index: var(--z-dropdown); }
+.z-tooltip { z-index: var(--z-tooltip); }
+.z-overlay { z-index: var(--z-overlay); }
+.z-sidebar-mobile { z-index: var(--z-sidebar-mobile); }
+.z-sort-modal { z-index: var(--z-sort-modal); }
+.z-modal { z-index: var(--z-modal); }
+.z-modal-backdrop { z-index: var(--z-modal-backdrop); }
+.z-toast { z-index: var(--z-toast); }
+.z-tag-modal { z-index: var(--z-tag-modal); }
+.z-confirm-modal { z-index: var(--z-confirm-modal); }
+
+/* 레이아웃 관련 클래스 */
+.modal-max-height { max-height: var(--modal-max-height); }
+.note-grid { 
+  grid-template-columns: repeat(auto-fill, minmax(var(--note-card-min-width), 1fr));
 }
