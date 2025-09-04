@@ -199,3 +199,16 @@ export function isValidDelta(deltaJson: string): boolean {
     return false;
   }
 }
+
+/**
+ * Converts content (HTML or Delta JSON) to plain text for searching.
+ * @param content - The content string (can be HTML or Delta JSON).
+ * @returns Plain text representation of the content.
+ */
+export function contentToText(content: string): string {
+  if (isValidDelta(content)) {
+    const html = deltaToHtml(content);
+    return htmlToText(html);
+  }
+  return htmlToText(content);
+}

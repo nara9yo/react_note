@@ -163,12 +163,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             }
             quillRef.current = null;
         };
-    }, [placeholder, readOnly, toolbar, id, name, ariaLabelledBy, value]);
+    }, [placeholder, readOnly, toolbar, id, name, ariaLabelledBy]);
 
     // Sync external value to editor
     useEffect(() => {
         const quill = quillRef.current;
         if (!quill || !editorRef.current) return;
+
+        if (quill.hasFocus()) {
+            return;
+        }
         
         try {
             if (initialDelta) {

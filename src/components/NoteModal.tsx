@@ -73,6 +73,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   // 모바일에서 모달 오픈 시 배경 스크롤 잠금
   useEffect(() => {
@@ -249,6 +250,16 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     }
   }, [isOpen, mode, preselectedTag, notes]);
 
+  // 모달이 열리고 생성 모드일 때 제목 입력란에 포커스
+  useEffect(() => {
+    if (isOpen && mode === 'create') {
+      const timer = setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 100); // 애니메이션 시간을 고려하여 약간의 지연 후 포커스
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, mode]);
+
   // 노트 생성/수정 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -370,6 +381,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
               {t('label.title')} *
             </label>
             <input
+              ref={titleInputRef}
               id="title"
               name="title"
               type="text"

@@ -10,6 +10,7 @@ import ConfirmModal from './ConfirmModal';
 import SortModal from './SortModal';
 // 타입 import
 import type { Note, SortOptions } from '../types';
+import { contentToText } from '../utils/deltaToHtml';
 // Lucide React 아이콘 import
 import { Loader2, AlertCircle, FileText, Pin, SortAsc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore, Archive } from 'lucide-react';
 
@@ -88,30 +89,34 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
 
   // 노트 필터링 및 정렬
   const getFilteredAndSortedNotes = () => {
-    const filteredNotes = notes.filter(note => {
+    let filteredNotes = notes.filter(note => {
       // 뷰별 필터링 (삭제된 노트는 trash에만 표시)
       if (currentView === 'archive' && (!note.archived || note.deleted)) return false;
       if (currentView === 'trash' && !note.deleted) return false;
       if (currentView === 'notes' && (note.archived || note.deleted)) return false;
-
-      // 태그별 필터링 (trash에서는 태그 필터링 적용 안함)
-      if (currentView !== 'trash') {
-        if (selectedTag === 'untagged') {
-          return note.tags.length === 0;
-        } else if (selectedTag) {
-          return note.tags.some(tag => tag.name === selectedTag);
-        }
-      }
-
-      // 검색어 필터링
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        return note.title.toLowerCase().includes(searchLower) || 
-               note.content.toLowerCase().includes(searchLower);
-      }
-
       return true;
     });
+
+    // 태그별 필터링 (trash에서는 태그 필터링 적용 안함)
+    if (currentView !== 'trash' && selectedTag) {
+      if (selectedTag === 'untagged') {
+        filteredNotes = filteredNotes.filter(note => note.tags.length === 0);
+      } else {
+        filteredNotes = filteredNotes.filter(note => 
+          note.tags.some(tag => tag.name === selectedTag)
+        );
+      }
+    }
+
+    // 검색어 필터링
+    if (searchTerm && searchTerm.trim() !== '') {
+        const searchLower = searchTerm.toLowerCase();
+        filteredNotes = filteredNotes.filter(note => {
+            const searchableContent = contentToText(note.content).toLowerCase();
+            return note.title.toLowerCase().includes(searchLower) || 
+                   searchableContent.includes(searchLower);
+        });
+    }
 
     // 고정된 노트를 먼저 표시하고, 그 다음 정렬 옵션에 따라 정렬
     filteredNotes.sort((a, b) => {
@@ -446,7 +451,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
   // 노트가 없는 경우
   if (status === 'succeeded' && filteredNotes.length === 0) {
     const emptyMessage = selectedTag 
-      ? `"${selectedTag}" ${t('message.noNotes')}`
+      ? `${selectedTag === 'untagged' ? `"${t('message.untagged')}"` : `"${selectedTag}"`} ${t('message.noNotes')}`
       : currentView === 'archive' 
         ? t('message.noNotes')
         : currentView === 'trash'
