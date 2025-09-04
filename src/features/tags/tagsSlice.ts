@@ -1,21 +1,27 @@
+// Redux Toolkit 라이브러리 import
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
+// Firebase Firestore 라이브러리 import
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+// Firebase 설정 import
 import { db } from '../../firebase';
+// 다국어 설정 import (에러 메시지용)
 import i18n from '../../i18n';
+// 타입 import
 import type { Tag } from '../../types';
 
-// Firebase 컬렉션 이름
+// Firebase 컬렉션 이름 상수
 const TAGS_COLLECTION = 'tags';
 
 // 태그 상태 인터페이스
 interface TagsState {
-  tags: Tag[];
-  loading: boolean;
-  error: string | null;
+  tags: Tag[]; // 태그 목록
+  loading: boolean; // 로딩 상태
+  error: string | null; // 에러 메시지
 }
 
-// 초기 상태
+// 태그 상태 초기값
+// - 빈 태그 배열, 로딩 중 아님, 에러 없음으로 시작
 const initialState: TagsState = {
   tags: [],
   loading: false,
@@ -23,6 +29,7 @@ const initialState: TagsState = {
 };
 
 // Firebase에서 태그 목록 가져오기
+// - Firestore의 tags 컬렉션에서 모든 태그 데이터 조회
 export const fetchTags = createAsyncThunk(
   'tags/fetchTags',
   async () => {
@@ -30,6 +37,7 @@ export const fetchTags = createAsyncThunk(
       const tagsCollection = collection(db, TAGS_COLLECTION);
       const querySnapshot = await getDocs(tagsCollection);
 
+      // 빈 컬렉션인 경우 빈 배열 반환
       if (querySnapshot.empty) {
         return [];
       }

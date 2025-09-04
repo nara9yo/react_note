@@ -39,14 +39,5 @@ export default defineConfig(({ mode }) => {
       // 청크 크기 경고 임계값 조정
       chunkSizeWarningLimit: 1000,
     },
-    test: {
-      environment: 'jsdom',
-      globals: true,
-      setupFiles: './src/test/setup.ts',
-      coverage: {
-        provider: 'v8',
-        reporter: ['text', 'html'],
-      },
-    }
   }
 })

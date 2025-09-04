@@ -1,19 +1,27 @@
+// React 훅 및 컴포넌트 import
 import { useState, Suspense, lazy } from 'react';
+// 타입 import
 import type { Note } from '../types';
+// Redux 관련 import
 import { useAppDispatch } from '../app/hooks';
 import { useLanguage } from '../app/hooks/useLanguage';
 import { deleteNote, updateNote } from '../features/notes/notesSlice';
+// Lucide React 아이콘 import
 import { Edit, Trash2, Calendar, Pin, Archive, ArchiveRestore, RotateCcw, CheckSquare, Square } from 'lucide-react';
+// 컴포넌트 import
 import ConfirmModal from './ConfirmModal';
+// timeago.js 관련 import (상대 시간 표시용)
 import { format, register } from 'timeago.js';
 import ko from 'timeago.js/lib/lang/ko';
 import en from 'timeago.js/lib/lang/en_US';
+// 유틸리티 함수 import
 import { deltaToHtml, isValidDelta } from '../utils/deltaToHtml';
 
-// 노트 카드 내용 표시 줄 수 설정
+// 노트 카드 내용 표시 줄 수 설정 (기본값)
 const NOTE_CARD_CONTENT_LINES = 3;
 
 // 짧은 형태의 영문 로케일 정의
+// - timeago.js에서 사용할 간단한 영문 시간 표시 형식
 const enShort = (_number: number, index: number) => [
   ['just now', 'right now'],
   ['%ss ago', 'in %ss'],
@@ -31,22 +39,29 @@ const enShort = (_number: number, index: number) => [
   ['%sy ago', 'in %sy'],
 ][index] as [string, string];
 
-// 지연 로딩을 위한 NoteModal
+// 지연 로딩을 위한 NoteModal 컴포넌트
+// - 코드 스플리팅으로 초기 번들 크기 최적화
 const NoteModal = lazy(() => import('./NoteModal'));
 
+// NoteCard 컴포넌트 Props 인터페이스
 interface NoteCardProps {
-  note: Note;
-  isSelectionMode?: boolean;
-  isSelected?: boolean;
-  onSelectionToggle?: (noteId: string) => void;
+  note: Note; // 표시할 노트 데이터
+  isSelectionMode?: boolean; // 선택 모드 여부
+  isSelected?: boolean; // 현재 선택된 상태
+  onSelectionToggle?: (noteId: string) => void; // 선택 상태 토글 콜백
   maxContentLines?: number; // 노트 카드 내용 표시 줄 수 (기본값: 3)
 }
 
+// 개별 노트 카드 컴포넌트
+// - 노트 정보 표시 및 편집/삭제 기능 제공
+// - 선택 모드 지원으로 다중 선택 가능
 const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle, maxContentLines = NOTE_CARD_CONTENT_LINES }) => {
-  const dispatch = useAppDispatch();
-  const { t, currentLanguage } = useLanguage();
+  // Redux 관련 훅들
+  const dispatch = useAppDispatch(); // Redux 액션 디스패치 함수
+  const { t, currentLanguage } = useLanguage(); // 다국어 번역 함수 및 현재 언어
 
   // timeago.js에 언어별 로케일 등록
+  // - 한국어와 영어 시간 표시 형식 등록
   register('ko', ko);
   register('en', en);
   register('en_short', enShort);

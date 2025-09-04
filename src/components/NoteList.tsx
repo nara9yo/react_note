@@ -1,26 +1,38 @@
+// React 훅 및 컴포넌트 import
 import React, { useEffect, useState } from 'react';
+// Redux 관련 import
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { useLanguage } from '../app/hooks/useLanguage';
 import { fetchNotes, selectAllNotes, selectNotesStatus, selectNotesError, updateNote, deleteNote } from '../features/notes/notesSlice';
+// 컴포넌트 import
 import NoteCard from './NoteCard';
 import ConfirmModal from './ConfirmModal';
 import SortModal from './SortModal';
+// 타입 import
 import type { Note, SortOptions } from '../types';
+// Lucide React 아이콘 import
 import { Loader2, AlertCircle, FileText, Pin, SortAsc, CheckSquare, Square, RotateCcw, Trash2, ArchiveRestore, Archive } from 'lucide-react';
 
+// NoteList 컴포넌트 Props 인터페이스
 interface NoteListProps {
-  selectedTag: string | null;
-  currentView: 'notes' | 'archive' | 'trash';
-  searchTerm: string;
+  selectedTag: string | null; // 선택된 태그 (필터링용)
+  currentView: 'notes' | 'archive' | 'trash'; // 현재 뷰 모드
+  searchTerm: string; // 검색어
 }
 
+// 노트 목록 컴포넌트
+// - 노트 필터링, 정렬, 선택 기능 제공
+// - 다양한 뷰 모드 지원 (일반, 아카이브, 휴지통)
 const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTerm }) => {
-  const dispatch = useAppDispatch();
-  const notes = useAppSelector(selectAllNotes);
-  const status = useAppSelector(selectNotesStatus);
-  const error = useAppSelector(selectNotesError);
-  const { t } = useLanguage();
+  // Redux 관련 훅들
+  const dispatch = useAppDispatch(); // Redux 액션 디스패치 함수
+  const notes = useAppSelector(selectAllNotes); // 모든 노트 데이터
+  const status = useAppSelector(selectNotesStatus); // 로딩 상태
+  const error = useAppSelector(selectNotesError); // 에러 상태
+  const { t } = useLanguage(); // 다국어 번역 함수
+  
   // localStorage에서 정렬 옵션 불러오기
+  // - 사용자가 설정한 정렬 옵션을 브라우저에 저장
   const getInitialSortOptions = (): SortOptions => {
     try {
       const saved = localStorage.getItem('noteSortOptions');

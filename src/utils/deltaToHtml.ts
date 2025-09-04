@@ -1,35 +1,42 @@
 /**
  * Quill Delta JSON을 HTML로 변환하는 유틸리티 함수
+ * - 리치 텍스트 에디터의 Delta 형식을 HTML로 변환
+ * - 노트 카드에서 서식이 적용된 텍스트 표시용
  */
 
+// Delta Operation 인터페이스
+// - Quill 에디터의 개별 텍스트 조작 단위
 interface DeltaOp {
-  insert: string;
+  insert: string; // 삽입할 텍스트 또는 객체
   attributes?: {
-    bold?: boolean;
-    italic?: boolean;
-    underline?: boolean;
-    strike?: boolean;
-    color?: string;
-    background?: string;
-    list?: 'ordered' | 'bullet';
-    blockquote?: boolean;
-    'code-block'?: boolean;
-    link?: string;
-    image?: string;
-    video?: string;
-    formula?: string;
-    header?: number;
-    align?: 'left' | 'center' | 'right' | 'justify';
-    indent?: number;
-    direction?: 'rtl';
-    script?: 'sub' | 'super';
-    size?: string;
-    font?: string;
+    // 텍스트 서식 속성들
+    bold?: boolean; // 굵게
+    italic?: boolean; // 기울임
+    underline?: boolean; // 밑줄
+    strike?: boolean; // 취소선
+    color?: string; // 텍스트 색상
+    background?: string; // 배경 색상
+    list?: 'ordered' | 'bullet'; // 리스트 타입
+    blockquote?: boolean; // 인용문
+    'code-block'?: boolean; // 코드 블록
+    link?: string; // 링크 URL
+    image?: string; // 이미지 URL
+    video?: string; // 비디오 URL
+    formula?: string; // 수식
+    header?: number; // 헤더 레벨
+    align?: 'left' | 'center' | 'right' | 'justify'; // 정렬
+    indent?: number; // 들여쓰기
+    direction?: 'rtl'; // 텍스트 방향
+    script?: 'sub' | 'super'; // 위첨자/아래첨자
+    size?: string; // 폰트 크기
+    font?: string; // 폰트 패밀리
   };
 }
 
+// Delta 인터페이스
+// - Quill 에디터의 전체 문서 구조
 interface Delta {
-  ops: DeltaOp[];
+  ops: DeltaOp[]; // Delta Operation 배열
 }
 
 /**

@@ -1,15 +1,20 @@
+// Redux Toolkit 라이브러리 import
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
+// Firebase API 함수들 import
 import {
   fetchNotesAPI,
   addNoteAPI,
   deleteNoteAPI,
   updateNoteAPI
 } from './notesAPI';
+// 타입 import
 import type { Note, CreateNoteData, UpdateNoteData, NotesState } from '../../types';
+// 다국어 설정 import (에러 메시지용)
 import i18n from '../../i18n';
 
-// 초기 상태
+// 노트 상태 초기값
+// - 빈 노트 배열, 유휴 상태, 에러 없음으로 시작
 const initialState: NotesState = {
   notes: [],
   status: 'idle',
@@ -17,6 +22,9 @@ const initialState: NotesState = {
 };
 
 // 비동기 Thunk 액션들
+// - Firebase와의 비동기 통신을 위한 액션들
+
+// 노트 목록 가져오기
 export const fetchNotes = createAsyncThunk(
   'notes/fetchNotes',
   async () => {
@@ -25,6 +33,7 @@ export const fetchNotes = createAsyncThunk(
   }
 );
 
+// 새 노트 추가
 export const addNewNote = createAsyncThunk(
   'notes/addNewNote',
   async (noteData: CreateNoteData) => {
@@ -33,6 +42,7 @@ export const addNewNote = createAsyncThunk(
   }
 );
 
+// 노트 삭제
 export const deleteNote = createAsyncThunk(
   'notes/deleteNote',
   async (noteId: string) => {
@@ -41,6 +51,7 @@ export const deleteNote = createAsyncThunk(
   }
 );
 
+// 노트 업데이트
 export const updateNote = createAsyncThunk(
   'notes/updateNote',
   async (noteData: UpdateNoteData) => {

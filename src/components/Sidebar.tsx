@@ -1,8 +1,12 @@
+// React 훅 및 컴포넌트 import
 import React, { Suspense, lazy } from 'react';
+// Redux 관련 import
 import { useAppSelector } from '../app/hooks';
 import { useLanguage } from '../app/hooks/useLanguage';
 import { selectAllNotes } from '../features/notes/notesSlice';
+// 타입 import
 import type { Tag } from '../types';
+// Lucide React 아이콘 import
 import {
   BookOpen,
   Tag as TagIcon,
@@ -11,17 +15,21 @@ import {
   X
 } from 'lucide-react';
 
+// Sidebar 컴포넌트 Props 인터페이스
 interface SidebarProps {
-  selectedTag: string | null;
-  onTagSelect: (tag: string | null) => void;
-  onViewChange: (view: 'notes' | 'archive' | 'trash') => void;
-  currentView: 'notes' | 'archive' | 'trash';
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
-  onClose?: () => void;
-  onTagManagementOpen: () => void;
+  selectedTag: string | null; // 현재 선택된 태그
+  onTagSelect: (tag: string | null) => void; // 태그 선택 콜백
+  onViewChange: (view: 'notes' | 'archive' | 'trash') => void; // 뷰 변경 콜백
+  currentView: 'notes' | 'archive' | 'trash'; // 현재 뷰 모드
+  searchTerm: string; // 검색어
+  onSearchChange: (term: string) => void; // 검색어 변경 콜백
+  onClose?: () => void; // 사이드바 닫기 콜백 (모바일용)
+  onTagManagementOpen: () => void; // 태그 관리 모달 열기 콜백
 }
 
+// 사이드바 컴포넌트
+// - 노트 필터링 및 네비게이션 기능 제공
+// - 태그 목록, 뷰 전환, 검색 기능 포함
 const Sidebar: React.FC<SidebarProps> = ({
   selectedTag,
   onTagSelect,
@@ -32,10 +40,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   onTagManagementOpen
 }) => {
-  const notes = useAppSelector(selectAllNotes);
-  const { t } = useLanguage();
+  // Redux 관련 훅들
+  const notes = useAppSelector(selectAllNotes); // 모든 노트 데이터
+  const { t } = useLanguage(); // 다국어 번역 함수
 
   // 태그별 노트 개수 계산 (active notes만 포함)
+  // - 아카이브되거나 삭제된 노트는 제외
   const getTagCounts = () => {
     const tagCounts: { [key: string]: number } = {};
     const allTags: Tag[] = [];

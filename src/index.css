@@ -1,252 +1,301 @@
+/* Tailwind CSS 프레임워크 import */
 @import "tailwindcss";
 
-/* CSS 변수 정의 */
+/* CSS 변수 정의 - 전역 색상 테마 관리 */
 :root {
-  /* 기본 색상 */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-secondary: #e5e7eb;
-  --color-secondary-hover: #d1d5db;
-  --color-text-primary: #111827;
-  --color-text-secondary: #374151;
-  --color-background: #f9fafb;
-  --color-border: #e5e7eb;
+  /* 기본 색상 팔레트 */
+  /* - 앱의 주요 색상들을 중앙에서 관리 */
+  --color-primary: #2563eb; /* 메인 브랜드 색상 (파란색) */
+  --color-primary-hover: #1d4ed8; /* 호버 상태 색상 */
+  --color-secondary: #e5e7eb; /* 보조 색상 (회색) */
+  --color-secondary-hover: #d1d5db; /* 보조 색상 호버 */
+  --color-text-primary: #111827; /* 주요 텍스트 색상 */
+  --color-text-secondary: #374151; /* 보조 텍스트 색상 */
+  --color-background: #f9fafb; /* 앱 배경색 */
+  --color-border: #e5e7eb; /* 테두리 색상 */
 
-  /* 태그 기본 색상 */
+  /* 태그 관련 색상 */
+  /* - 태그 시스템에서 사용하는 기본 색상 */
   --color-tag-default: #3b82f6;
 
-  /* 우선순위 색상 */
-  --color-priority-low: #10b981;
-  --color-priority-medium: #f59e0b;
-  --color-priority-high: #ef4444;
+  /* 우선순위 색상 시스템 */
+  /* - 노트 우선순위별 색상 정의 */
+  --color-priority-low: #10b981; /* 낮음 (초록색) */
+  --color-priority-medium: #f59e0b; /* 보통 (주황색) */
+  --color-priority-high: #ef4444; /* 높음 (빨간색) */
 
-  /* 배경색 옵션 */
-  --color-bg-white: #ffffff;
-  --color-bg-yellow: #fef3c7;
-  --color-bg-blue: #dbeafe;
-  --color-bg-green: #dcfce7;
-  --color-bg-pink: #fce7f3;
-  --color-bg-purple: #f3e8ff;
-  --color-bg-red: #fef2f2;
-  --color-bg-light-yellow: #fefce8;
+  /* 노트 배경색 옵션 */
+  /* - 사용자가 선택할 수 있는 노트 배경색들 */
+  --color-bg-white: #ffffff; /* 흰색 */
+  --color-bg-yellow: #fef3c7; /* 노란색 */
+  --color-bg-blue: #dbeafe; /* 파란색 */
+  --color-bg-green: #dcfce7; /* 초록색 */
+  --color-bg-pink: #fce7f3; /* 분홍색 */
+  --color-bg-purple: #f3e8ff; /* 보라색 */
+  --color-bg-red: #fef2f2; /* 빨간색 */
+  --color-bg-light-yellow: #fefce8; /* 연한 노란색 */
 
   /* 선택 상태 색상 */
+  /* - 사용자 인터랙션 시 선택된 요소의 색상 */
   --color-selection: #eff6ff;
 
-  /* 인터랙션 색상 */
-  --color-blue-50: #eff6ff;
-  --color-blue-100: #dbeafe;
-  --color-blue-200: #bfdbfe;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  --color-blue-700: #1d4ed8;
-  --color-blue-900: #1e3a8a;
+  /* 인터랙션 색상 팔레트 */
+  /* - 버튼, 링크 등 인터랙티브 요소들의 색상 */
+  --color-blue-50: #eff6ff; /* 매우 연한 파란색 */
+  --color-blue-100: #dbeafe; /* 연한 파란색 */
+  --color-blue-200: #bfdbfe; /* 중간 연한 파란색 */
+  --color-blue-500: #3b82f6; /* 기본 파란색 */
+  --color-blue-600: #2563eb; /* 진한 파란색 */
+  --color-blue-700: #1d4ed8; /* 매우 진한 파란색 */
+  --color-blue-900: #1e3a8a; /* 가장 진한 파란색 */
 
-  /* 회색 색상 */
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-900: #111827;
+  /* 회색 색상 팔레트 */
+  /* - 텍스트, 배경, 테두리 등에 사용되는 회색 톤들 */
+  --color-gray-100: #f3f4f6; /* 매우 연한 회색 */
+  --color-gray-200: #e5e7eb; /* 연한 회색 */
+  --color-gray-300: #d1d5db; /* 중간 연한 회색 */
+  --color-gray-400: #9ca3af; /* 중간 회색 */
+  --color-gray-500: #6b7280; /* 기본 회색 */
+  --color-gray-600: #4b5563; /* 진한 회색 */
+  --color-gray-700: #374151; /* 매우 진한 회색 */
+  --color-gray-900: #111827; /* 가장 진한 회색 */
 }
 
-/* 커스텀 스타일 */
+/* 전역 기본 스타일 */
+/* - 앱 전체에 적용되는 기본 스타일 정의 */
 body {
-  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* 폰트 패밀리 설정 */
+  background-color: var(--color-background); /* 배경색 적용 */
+  color: var(--color-text-primary); /* 텍스트 색상 적용 */
 }
 
+/* 버튼 컴포넌트 스타일 */
+/* - 재사용 가능한 버튼 스타일 정의 */
+
+/* 메인 버튼 스타일 */
 .btn-primary {
-  background-color: var(--color-primary);
-  color: white;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
+  background-color: var(--color-primary); /* 메인 색상 배경 */
+  color: white; /* 흰색 텍스트 */
+  font-weight: 500; /* 중간 굵기 폰트 */
+  padding: 0.5rem 1rem; /* 내부 여백 */
+  border-radius: 0.5rem; /* 둥근 모서리 */
+  transition: background-color 0.2s; /* 색상 변화 애니메이션 */
 }
 
+/* 메인 버튼 호버 효과 */
 .btn-primary:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--color-primary-hover); /* 호버 시 진한 색상 */
 }
 
+/* 보조 버튼 스타일 */
 .btn-secondary {
-  background-color: var(--color-secondary);
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
+  background-color: var(--color-secondary); /* 보조 색상 배경 */
+  color: var(--color-text-secondary); /* 보조 텍스트 색상 */
+  font-weight: 500; /* 중간 굵기 폰트 */
+  padding: 0.5rem 1rem; /* 내부 여백 */
+  border-radius: 0.5rem; /* 둥근 모서리 */
+  transition: background-color 0.2s; /* 색상 변화 애니메이션 */
 }
 
+/* 보조 버튼 호버 효과 */
 .btn-secondary:hover {
-  background-color: var(--color-secondary-hover);
+  background-color: var(--color-secondary-hover); /* 호버 시 진한 색상 */
 }
 
+/* 카드 컴포넌트 스타일 */
+/* - 노트 카드, 모달 등에 사용되는 카드 스타일 */
 .card {
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--color-border);
-  padding: 1.5rem;
+  border-radius: 0.5rem; /* 둥근 모서리 */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+  border: 1px solid var(--color-border); /* 테두리 */
+  padding: 1.5rem; /* 내부 여백 */
 }
 
-/* 스크롤바 숨기기 */
+/* 스크롤바 숨기기 유틸리티 */
+/* - 스크롤바를 숨기면서 스크롤 기능은 유지하는 클래스 */
 .scrollbar-hide {
-  -ms-overflow-style: none;
-  /* IE and Edge */
-  scrollbar-width: none;
-  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge에서 스크롤바 숨김 */
+  scrollbar-width: none; /* Firefox에서 스크롤바 숨김 */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;
-  /* Chrome, Safari and Opera */
+  display: none; /* Chrome, Safari and Opera에서 스크롤바 숨김 */
 }
 
-/* 드롭다운 색상 옵션 스타일 */
+/* 색상 선택 드롭다운 스타일 */
+/* - 태그 색상, 노트 배경색 선택 시 사용되는 드롭다운 스타일 */
+
+/* 색상 옵션 컨테이너 */
 .color-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  display: flex; /* 플렉스 레이아웃 */
+  align-items: center; /* 수직 중앙 정렬 */
+  gap: 0.5rem; /* 요소 간 간격 */
+  padding: 0.5rem; /* 내부 여백 */
 }
 
+/* 색상 미리보기 원형 */
 .color-preview {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 0.25rem;
-  border: 1px solid #d1d5db;
-  flex-shrink: 0;
+  width: 1rem; /* 너비 */
+  height: 1rem; /* 높이 */
+  border-radius: 0.25rem; /* 둥근 모서리 */
+  border: 1px solid #d1d5db; /* 테두리 */
+  flex-shrink: 0; /* 크기 고정 */
 }
 
-/* 커스텀 인터랙션 클래스 */
+/* 파란색 테마 인터랙션 클래스 */
+/* - 파란색 계열의 버튼, 텍스트, 배경 스타일 정의 */
+
+/* 진한 파란색 버튼 */
 .btn-blue {
-  background-color: var(--color-blue-600);
-  color: white;
-  transition: background-color 0.2s;
+  background-color: var(--color-blue-600); /* 진한 파란색 배경 */
+  color: white; /* 흰색 텍스트 */
+  transition: background-color 0.2s; /* 색상 변화 애니메이션 */
 }
 
 .btn-blue:hover {
-  background-color: var(--color-blue-700);
+  background-color: var(--color-blue-700); /* 호버 시 더 진한 파란색 */
 }
 
+/* 연한 파란색 버튼 */
 .btn-blue-light {
-  background-color: var(--color-blue-100);
-  color: var(--color-blue-700);
-  transition: background-color 0.2s;
+  background-color: var(--color-blue-100); /* 연한 파란색 배경 */
+  color: var(--color-blue-700); /* 진한 파란색 텍스트 */
+  transition: background-color 0.2s; /* 색상 변화 애니메이션 */
 }
 
 .btn-blue-light:hover {
-  background-color: var(--color-blue-200);
+  background-color: var(--color-blue-200); /* 호버 시 중간 파란색 */
 }
 
+/* 파란색 텍스트 */
 .text-blue {
-  color: var(--color-blue-600);
+  color: var(--color-blue-600); /* 파란색 텍스트 */
 }
 
+/* 파란색 텍스트 호버 효과 */
 .text-blue-hover:hover {
-  color: var(--color-blue-700);
+  color: var(--color-blue-700); /* 호버 시 진한 파란색 */
 }
 
+/* 연한 파란색 배경 */
 .bg-blue-light {
-  background-color: var(--color-blue-50);
+  background-color: var(--color-blue-50); /* 매우 연한 파란색 배경 */
 }
 
+/* 파란색 테두리 */
 .border-blue {
-  border-color: var(--color-blue-500);
+  border-color: var(--color-blue-500); /* 파란색 테두리 */
 }
 
+/* 파란색 포커스 효과 */
 .focus-blue:focus {
-  --tw-ring-color: var(--color-blue-500);
-  border-color: var(--color-blue-500);
+  --tw-ring-color: var(--color-blue-500); /* Tailwind ring 색상 */
+  border-color: var(--color-blue-500); /* 포커스 시 파란색 테두리 */
 }
 
-/* 선택 상태 */
+/* 선택 상태 스타일 */
+/* - 사용자가 선택한 요소의 시각적 표시 */
+
+/* 선택된 요소 스타일 */
 .selected {
-  border-color: var(--color-blue-500);
-  background-color: var(--color-blue-50);
+  border-color: var(--color-blue-500); /* 파란색 테두리 */
+  background-color: var(--color-blue-50); /* 연한 파란색 배경 */
 }
 
+/* 선택된 텍스트 색상 */
 .selected-text {
-  color: var(--color-blue-900);
+  color: var(--color-blue-900); /* 진한 파란색 텍스트 */
 }
 
-/* Quill inside rounded containers should not bleed past borders */
+/* Quill 리치 텍스트 에디터 커스터마이징 */
+/* - Quill 에디터의 기본 스타일을 오버라이드하여 앱 디자인에 맞게 조정 */
+
+/* 에디터 컨테이너 테두리 제거 */
 .quill-wrapper .ql-container.ql-snow {
-  border: 0 !important;
-  border-radius: 0 !important;
+  border: 0 !important; /* 기본 테두리 제거 */
+  border-radius: 0 !important; /* 기본 둥근 모서리 제거 */
 }
 
+/* 툴바 스타일 조정 */
 .quill-wrapper .ql-toolbar.ql-snow {
-  border-left: 0 !important;
-  border-right: 0 !important;
-  border-top: 0 !important;
-  border-bottom: 1px solid var(--color-border) !important;
-  border-radius: 0 !important;
+  border-left: 0 !important; /* 좌측 테두리 제거 */
+  border-right: 0 !important; /* 우측 테두리 제거 */
+  border-top: 0 !important; /* 상단 테두리 제거 */
+  border-bottom: 1px solid var(--color-border) !important; /* 하단 테두리만 유지 */
+  border-radius: 0 !important; /* 둥근 모서리 제거 */
 }
 
+/* 에디터 너비 설정 */
 .quill-wrapper .ql-container.ql-snow,
 .quill-wrapper .ql-editor {
-  width: 100% !important;
+  width: 100% !important; /* 전체 너비 사용 */
 }
 
-/* Limit editor height and add internal scrollbar when content exceeds */
+/* 에디터 높이 제한 및 스크롤 설정 */
 .quill-wrapper .ql-container.ql-snow {
-  max-height: 250px;
-  overflow-y: auto;
-  /* scrollbar lives inside editor */
+  max-height: 250px; /* 최대 높이 제한 */
+  overflow-y: auto; /* 세로 스크롤 활성화 */
+  /* 스크롤바는 에디터 내부에 위치 */
 }
 
+/* 에디터 최소 높이 설정 */
 .quill-wrapper .ql-editor {
-  min-height: 160px;
+  min-height: 160px; /* 최소 높이 보장 */
 }
 
+/* Quill 래퍼 컨테이너 */
 .quill-wrapper {
-  border-radius: inherit;
-  overflow: hidden;
+  border-radius: inherit; /* 부모 요소의 둥근 모서리 상속 */
+  overflow: hidden; /* 넘치는 내용 숨김 */
 }
 
-/* 노트 카드 리스트 스타일 */
+/* 노트 카드 콘텐츠 스타일 */
+/* - 노트 카드에서 표시되는 텍스트 콘텐츠의 스타일 정의 */
+
+/* 텍스트 말줄임표를 위한 기본 스타일 */
 .note-card-content {
-  /* 텍스트 말줄임표를 위한 기본 스타일 */
-  word-wrap: break-word;
-  word-break: break-word;
+  word-wrap: break-word; /* 긴 단어 줄바꿈 */
+  word-break: break-word; /* 단어 중간에서도 줄바꿈 허용 */
   /* WebkitLineClamp이 제대로 작동하도록 보장 */
-  -webkit-line-clamp: inherit;
-  -webkit-box-orient: vertical;
-  display: -webkit-box;
+  -webkit-line-clamp: inherit; /* 상속받은 줄 수 제한 */
+  line-clamp: inherit; /* 표준 line-clamp 속성 */
+  -webkit-box-orient: vertical; /* 세로 방향 박스 */
+  display: -webkit-box; /* 플렉스박스 모드 */
 }
 
-/* 노트 카드 내 이미지 크기 제한 */
+/* 노트 카드 내 미디어 요소 스타일 */
+/* - 노트 카드에서 표시되는 이미지, 리스트 등의 스타일 */
+
+/* 이미지 크기 제한 및 스타일 */
 .note-card-content img {
-  max-width: 100% !important;
-  max-height: 80px !important;
-  width: auto !important;
-  height: auto !important;
-  object-fit: cover !important;
-  border-radius: 4px !important;
-  margin: 2px 0 !important;
+  max-width: 100% !important; /* 최대 너비 100% */
+  max-height: 80px !important; /* 최대 높이 80px */
+  width: auto !important; /* 자동 너비 */
+  height: auto !important; /* 자동 높이 */
+  object-fit: cover !important; /* 비율 유지하며 크롭 */
+  border-radius: 4px !important; /* 둥근 모서리 */
+  margin: 2px 0 !important; /* 상하 여백 */
 }
 
+/* 순서 있는 리스트 스타일 */
 .note-card-content ol {
-  list-style-type: decimal !important;
-  list-style-position: inside !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  list-style-type: decimal !important; /* 숫자 스타일 */
+  list-style-position: inside !important; /* 마커를 내부에 위치 */
+  margin: 0 !important; /* 외부 여백 제거 */
+  padding: 0 !important; /* 내부 여백 제거 */
 }
 
+/* 순서 없는 리스트 스타일 */
 .note-card-content ul {
-  list-style-type: disc !important;
-  list-style-position: inside !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  list-style-type: disc !important; /* 원형 마커 */
+  list-style-position: inside !important; /* 마커를 내부에 위치 */
+  margin: 0 !important; /* 외부 여백 제거 */
+  padding: 0 !important; /* 내부 여백 제거 */
 }
 
+/* 리스트 아이템 스타일 */
 .note-card-content li {
-  margin: 0 !important;
-  padding: 0 !important;
-  display: list-item !important;
+  margin: 0 !important; /* 외부 여백 제거 */
+  padding: 0 !important; /* 내부 여백 제거 */
+  display: list-item !important; /* 리스트 아이템으로 표시 */
 }

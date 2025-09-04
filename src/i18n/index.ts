@@ -1,8 +1,10 @@
+// 다국어 지원 라이브러리 import
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// 한국어 번역
+// 한국어 번역 리소스
+// - 앱의 모든 UI 텍스트를 한국어로 번역
 const ko = {
   translation: {
     // 메뉴 및 네비게이션
@@ -466,24 +468,29 @@ const en = {
   }
 };
 
+// i18next 초기화 설정
+// - 언어 감지, React 통합, 번역 리소스 설정
 i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
+  .use(LanguageDetector) // 브라우저 언어 자동 감지
+  .use(initReactI18next) // React 컴포넌트 통합
   .init({
     resources: {
-      ko,
-      en
+      ko, // 한국어 번역 리소스
+      en  // 영어 번역 리소스
     },
-    fallbackLng: 'ko',
+    fallbackLng: 'ko', // 기본 언어 (한국어)
+    // 개발 환경에서 디버그 모드 활성화
     debug: process.env.NODE_ENV === 'development',
 
+    // HTML 이스케이프 비활성화 (React에서 자동 처리)
     interpolation: {
       escapeValue: false
     },
 
+    // 언어 감지 설정
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage']
+      order: ['localStorage', 'navigator'], // localStorage 우선, 그 다음 브라우저 언어
+      caches: ['localStorage'] // 선택한 언어를 localStorage에 저장
     }
   });
 
