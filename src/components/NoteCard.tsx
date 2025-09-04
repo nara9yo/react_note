@@ -8,6 +8,10 @@ import ConfirmModal from './ConfirmModal';
 import { format, register } from 'timeago.js';
 import ko from 'timeago.js/lib/lang/ko';
 import en from 'timeago.js/lib/lang/en_US';
+import { deltaToHtml, isValidDelta } from '../utils/deltaToHtml';
+
+// 노트 카드 내용 표시 줄 수 설정
+const NOTE_CARD_CONTENT_LINES = 3;
 
 // 짧은 형태의 영문 로케일 정의
 const enShort = (_number: number, index: number) => [
@@ -35,9 +39,10 @@ interface NoteCardProps {
   isSelectionMode?: boolean;
   isSelected?: boolean;
   onSelectionToggle?: (noteId: string) => void;
+  maxContentLines?: number; // 노트 카드 내용 표시 줄 수 (기본값: 3)
 }
 
-const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle }) => {
+const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSelected = false, onSelectionToggle, maxContentLines = NOTE_CARD_CONTENT_LINES }) => {
   const dispatch = useAppDispatch();
   const { t, currentLanguage } = useLanguage();
 
@@ -300,6 +305,18 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
     }
   };
 
+  // 노트 내용을 HTML로 변환하여 표시
+  const getNoteContentHtml = (content: string) => {
+    // Delta JSON인지 확인
+    if (isValidDelta(content)) {
+      return deltaToHtml(content);
+    }
+    // HTML이거나 일반 텍스트인 경우 그대로 반환
+    return content;
+  };
+
+
+
   return (
     <div 
       className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border overflow-hidden flex flex-col ${isSelectionMode && isSelected
@@ -308,7 +325,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
       }`}
       style={{ 
         backgroundColor: isSelectionMode && isSelected ? '#eff6ff' : note.backgroundColor,
-        minHeight: '200px'
+        minHeight: '200px',
+        maxHeight: '400px'
       }}
     >
       <div className="p-3 space-y-2 flex-1 flex flex-col cursor-pointer" onClick={openInViewMode}>
@@ -355,10 +373,26 @@ const NoteCard: React.FC<NoteCardProps> = ({ note, isSelectionMode = false, isSe
         </div>
 
         {/* 중앙: 노트 내용 */}
-        <div className="text-gray-700 leading-relaxed flex-1">
-          <p className="line-clamp-2 whitespace-pre-wrap text-xs">
-            {note.content}
-          </p>
+        <div className="text-gray-700 leading-relaxed flex-1 overflow-hidden">
+          <div 
+            className="text-xs prose prose-sm max-w-none note-card-content"
+            style={{ 
+              ...(maxContentLines > 0 ? {
+                display: '-webkit-box',
+                WebkitLineClamp: maxContentLines,
+                WebkitBoxOrient: 'vertical',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden'
+              } : {
+                maxHeight: '120px',
+                overflowY: 'auto'
+              }),
+              lineHeight: '1.4'
+            }}
+            dangerouslySetInnerHTML={{ 
+              __html: getNoteContentHtml(note.content) 
+            }}
+          />
         </div>
 
         {/* 태그 섹션 */}

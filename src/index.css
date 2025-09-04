@@ -208,3 +208,45 @@ body {
   border-radius: inherit;
   overflow: hidden;
 }
+
+/* 노트 카드 리스트 스타일 */
+.note-card-content {
+  /* 텍스트 말줄임표를 위한 기본 스타일 */
+  word-wrap: break-word;
+  word-break: break-word;
+  /* WebkitLineClamp이 제대로 작동하도록 보장 */
+  -webkit-line-clamp: inherit;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+}
+
+/* 노트 카드 내 이미지 크기 제한 */
+.note-card-content img {
+  max-width: 100% !important;
+  max-height: 80px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: cover !important;
+  border-radius: 4px !important;
+  margin: 2px 0 !important;
+}
+
+.note-card-content ol {
+  list-style-type: decimal !important;
+  list-style-position: inside !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.note-card-content ul {
+  list-style-type: disc !important;
+  list-style-position: inside !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.note-card-content li {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: list-item !important;
+}

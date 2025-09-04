@@ -169,11 +169,23 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     useEffect(() => {
         const quill = quillRef.current;
         if (!quill || !editorRef.current) return;
-        const currentHtml = editorRef.current.innerHTML;
-        if (value !== currentHtml) {
-            quill.clipboard.dangerouslyPasteHTML(value || '');
+        
+        try {
+            if (initialDelta) {
+                const delta = JSON.parse(initialDelta);
+                quill.setContents(delta);
+            } else if (value) {
+                const currentHtml = editorRef.current.innerHTML;
+                if (value !== currentHtml) {
+                    quill.clipboard.dangerouslyPasteHTML(value);
+                }
+            }
+        } catch {
+            if (value) {
+                quill.clipboard.dangerouslyPasteHTML(value);
+            }
         }
-    }, [value]);
+    }, [value, initialDelta]);
 
     return (
         <div

@@ -576,6 +576,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                 isSelectionMode={isSelectionMode}
                 isSelected={selectedNotes.includes(note.id)}
                 onSelectionToggle={toggleNoteSelection}
+                maxContentLines={4}
               />
             ))}
           </div>
@@ -599,6 +600,7 @@ const NoteList: React.FC<NoteListProps> = ({ selectedTag, currentView, searchTer
                 isSelectionMode={isSelectionMode}
                 isSelected={selectedNotes.includes(note.id)}
                 onSelectionToggle={toggleNoteSelection}
+                maxContentLines={4}
               />
             ))}
           </div>
