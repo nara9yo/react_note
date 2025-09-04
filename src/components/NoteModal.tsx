@@ -71,6 +71,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // 초기 로딩 상태 추적
   const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
@@ -123,6 +124,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setPriority(DEFAULT_NOTE_DATA.priority);
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
         setIsDirty(false);
+        setIsInitialLoad(true);
         setModalTitle('');
       }, TIMING.MODAL_ANIMATION_DELAY);
       return;
@@ -138,6 +140,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         setBackgroundColor(DEFAULT_NOTE_DATA.backgroundColor);
         setModalTitle(t('modal.title.newNote'));
         setIsDirty(false); // 생성 모드에서는 처음엔 clean
+        setIsInitialLoad(false); // 생성 모드에서는 즉시 입력 감지 시작
       return;
     }
 
@@ -169,8 +172,13 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
         // isDirty는 모달이 처음 열릴 때만 false로 설정
         if (mode === 'view') {
           setIsDirty(false); // 보기 모드에서는 처음엔 clean
+          // 초기 로딩 완료 후 변경 감지 시작
+          setTimeout(() => {
+            setIsInitialLoad(false);
+          }, TIMING.CONTENT_CHANGE_DELAY * 2);
         } else if (mode === 'edit') {
           setIsDirty(true); // 편집 모드에서는 바로 수정 가능
+          setIsInitialLoad(false);
         }
         
         // Trash에 있는 노트인지 확인하여 타이틀 설정
@@ -203,54 +211,57 @@ const NoteModal: React.FC<NoteModalProps> = ({ isOpen, onClose, mode, note, pres
     }
   }, [t, isOpen, mode, note]);
 
-  // '보기' 모드에서 내용 변경 시 '수정' 모드로 전환
+  // '보기' 모드에서 사용자가 실제로 내용을 변경했을 때만 '수정' 모드로 전환
   useEffect(() => {
     // Early return: 조건이 맞지 않는 경우
-    if (!isOpen || mode !== 'view' || isReadOnly || !note) return;
+    if (!isOpen || mode !== 'view' || isReadOnly || !note || !isDirty) return;
 
-      // 초기 로딩이 완료된 후에만 변경 감지 시작
-      const timer = setTimeout(() => {
-        const hasChanged = 
-          note.title !== title ||
-          note.content !== content ||
-          note.priority !== priority ||
-          note.backgroundColor !== backgroundColor ||
-          JSON.stringify(note.tags.map(t => t.id).sort()) !== JSON.stringify(selectedTags.map(t => t.id).sort());
-
-        if (hasChanged && !isDirty) {
-          setIsDirty(true);
-          // Trash에 있는 노트인지 확인하여 타이틀 설정
-          if (note.deleted) {
-            setModalTitle(t('modal.title.editNote'));
-          } else {
-            setModalTitle(t('modal.title.editNote'));
-        }
+    // isDirty가 true가 된 후에만 실행 (사용자가 실제로 변경한 경우)
+    const timer = setTimeout(() => {
+      // Trash에 있는 노트인지 확인하여 타이틀 설정
+      if (note.deleted) {
+        setModalTitle(t('modal.title.editNote'));
+      } else {
+        setModalTitle(t('modal.title.editNote'));
       }
-      }, TIMING.CONTENT_CHANGE_DELAY); // 초기 로딩 완료 후 지연
+    }, TIMING.CONTENT_CHANGE_DELAY);
 
-      return () => clearTimeout(timer);
-  }, [isOpen, mode, isReadOnly, note, title, content, priority, backgroundColor, selectedTags, isDirty, t]);
+    return () => clearTimeout(timer);
+  }, [isOpen, mode, isReadOnly, note, isDirty, t]);
+
+  // 보기 모드에서 사용자 입력 감지 (초기 로딩 완료 후에만)
+  useEffect(() => {
+    // Early return: 조건이 맞지 않는 경우
+    if (!isOpen || mode !== 'view' || isReadOnly || !note || isInitialLoad) return;
+
+    // 사용자가 실제로 변경했는지 확인
+    const hasUserChanged = 
+      note.title !== title ||
+      note.priority !== priority ||
+      note.backgroundColor !== backgroundColor ||
+      JSON.stringify(note.tags.map(t => t.id).sort()) !== JSON.stringify(selectedTags.map(t => t.id).sort());
+
+    if (hasUserChanged && !isDirty) {
+      setIsDirty(true);
+    }
+  }, [isOpen, mode, isReadOnly, note, title, priority, backgroundColor, selectedTags, isDirty, isInitialLoad]);
 
   // 생성 모드에서 내용 변경 시 isDirty 설정
   useEffect(() => {
     // Early return: 조건이 맞지 않는 경우
-    if (!isOpen || mode !== 'create') return;
+    if (!isOpen || mode !== 'create' || isInitialLoad) return;
 
-      const timer = setTimeout(() => {
-        const hasChanged = 
-          title !== '' ||
-          content !== '' ||
-          priority !== DEFAULT_NOTE_DATA.priority ||
-          backgroundColor !== DEFAULT_NOTE_DATA.backgroundColor ||
-          selectedTags.length > 0;
-        
-        if (hasChanged && !isDirty) {
-            setIsDirty(true);
-        }
-      }, TIMING.CONTENT_CHANGE_DELAY); // 초기 로딩 완료 후 지연
-
-      return () => clearTimeout(timer);
-  }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags, isDirty]);
+    const hasChanged = 
+      title !== '' ||
+      content !== '' ||
+      priority !== DEFAULT_NOTE_DATA.priority ||
+      backgroundColor !== DEFAULT_NOTE_DATA.backgroundColor ||
+      selectedTags.length > 0;
+    
+    if (hasChanged && !isDirty) {
+      setIsDirty(true);
+    }
+  }, [isOpen, mode, title, content, priority, backgroundColor, selectedTags, isDirty, isInitialLoad]);
 
   // 미리 선택된 태그 처리 (생성 모드에서만)
   useEffect(() => {

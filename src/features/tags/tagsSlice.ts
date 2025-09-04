@@ -4,7 +4,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 // Firebase Firestore 라이브러리 import
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 // Firebase 설정 import
-import { db } from '../../firebase';
+import { getFirestoreInstance } from '../../firebase';
 // 다국어 설정 import (에러 메시지용)
 import i18n from '../../i18n';
 // 타입 import
@@ -34,6 +34,7 @@ export const fetchTags = createAsyncThunk(
   'tags/fetchTags',
   async () => {
     try {
+      const db = getFirestoreInstance();
       const tagsCollection = collection(db, TAGS_COLLECTION);
       const querySnapshot = await getDocs(tagsCollection);
 
@@ -75,6 +76,7 @@ export const addTag = createAsyncThunk(
       updatedAt: now,
     };
 
+    const db = getFirestoreInstance();
     const docRef = await addDoc(collection(db, TAGS_COLLECTION), tagData);
 
     return {
@@ -94,6 +96,7 @@ export const updateTag = createAsyncThunk(
       updatedAt: now,
     };
 
+    const db = getFirestoreInstance();
     const tagRef = doc(db, TAGS_COLLECTION, tag.id);
     await updateDoc(tagRef, updateData);
 
@@ -108,6 +111,7 @@ export const updateTag = createAsyncThunk(
 export const deleteTag = createAsyncThunk(
   'tags/deleteTag',
   async (tagId: string) => {
+    const db = getFirestoreInstance();
     const tagRef = doc(db, TAGS_COLLECTION, tagId);
     await deleteDoc(tagRef);
 
@@ -121,7 +125,7 @@ export const updateTagUsageCount = createAsyncThunk(
   async (tagId: string) => {
     // 해당 태그를 사용하는 활성 노트 수를 계산 (삭제되지 않고 보관되지 않은 노트만)
     const notesQuery = query(
-      collection(db, 'notes'),
+      collection(getFirestoreInstance(), 'notes'),
       where('tags', 'array-contains', { id: tagId })
     );
 
@@ -137,6 +141,7 @@ export const updateTagUsageCount = createAsyncThunk(
     });
 
     // 태그 사용량 업데이트
+    const db = getFirestoreInstance();
     const tagRef = doc(db, TAGS_COLLECTION, tagId);
     await updateDoc(tagRef, {
       usageCount,
@@ -153,7 +158,7 @@ export const updateAllTagsUsageCount = createAsyncThunk(
   async () => {
     try {
       // 모든 노트를 가져와서 태그별 사용량 계산
-      const notesSnapshot = await getDocs(collection(db, 'notes'));
+      const notesSnapshot = await getDocs(collection(getFirestoreInstance(), 'notes'));
       const tagUsageMap = new Map<string, number>();
 
       notesSnapshot.forEach((doc) => {
@@ -169,7 +174,7 @@ export const updateAllTagsUsageCount = createAsyncThunk(
       // 태그 컬렉션이 비어있는지 확인
       let tagsSnapshot;
       try {
-        tagsSnapshot = await getDocs(collection(db, TAGS_COLLECTION));
+        tagsSnapshot = await getDocs(collection(getFirestoreInstance(), TAGS_COLLECTION));
       } catch (queryError) {
         // BloomFilter 오류나 기타 쿼리 오류 처리
         if (queryError instanceof Error && queryError.name === 'BloomFilterError') {

@@ -8,7 +8,7 @@ import {
   orderBy,
   query
 } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { getFirestoreInstance } from '../../firebase';
 import i18n from '../../i18n';
 import type { Note, CreateNoteData, UpdateNoteData } from '../../types';
 
@@ -18,6 +18,7 @@ const COLLECTION_NAME = 'notes';
 // 모든 노트를 불러오는 함수
 export const fetchNotesAPI = async (): Promise<Note[]> => {
   try {
+    const db = getFirestoreInstance();
     const notesRef = collection(db, COLLECTION_NAME);
     const q = query(notesRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
@@ -60,6 +61,7 @@ export const addNoteAPI = async (noteData: CreateNoteData): Promise<Note> => {
       updatedAt: now,
     };
 
+    const db = getFirestoreInstance();
     const docRef = await addDoc(collection(db, COLLECTION_NAME), noteToAdd);
 
     return {
@@ -75,6 +77,7 @@ export const addNoteAPI = async (noteData: CreateNoteData): Promise<Note> => {
 // 노트를 삭제하는 함수
 export const deleteNoteAPI = async (noteId: string): Promise<void> => {
   try {
+    const db = getFirestoreInstance();
     await deleteDoc(doc(db, COLLECTION_NAME, noteId));
   } catch (error) {
     console.error(i18n.t('error.deleteFailed'), error);
@@ -88,6 +91,7 @@ export const updateNoteAPI = async (noteData: UpdateNoteData): Promise<Note> => 
     const { id, ...updateData } = noteData;
     const now = new Date().toISOString();
 
+    const db = getFirestoreInstance();
     await updateDoc(doc(db, COLLECTION_NAME, id), {
       ...updateData,
       updatedAt: now,

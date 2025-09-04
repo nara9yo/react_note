@@ -105,6 +105,22 @@ const ko = {
     'error.firebaseProjectIdMissing': 'Firebase Project ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.',
     'error.tagUsageUpdateFailed': '태그 사용량 업데이트 중 오류 발생',
     
+    // 환경 변수 검증 에러
+    'error.envValidationFailed': 'Firebase 환경 변수 검증 실패',
+    'error.envValidationDescription': 'Firebase 연결을 위해 환경 변수 설정이 필요합니다.',
+    'error.envValidationErrors': '발견된 문제',
+    'error.envValidationSteps': '해결 방법',
+    'error.envRequired': '{{field}} 환경 변수가 설정되지 않았습니다',
+    'error.envTooShort': '{{field}} 값이 너무 짧습니다 (최소 {{minLength}}자)',
+    'error.envTooLong': '{{field}} 값이 너무 깁니다 (최대 {{maxLength}}자)',
+    'error.envInvalidFormat': '{{field}} 형식이 올바르지 않습니다 ({{description}})',
+    'error.envExampleValue': '{{field}}에 예시 값이 사용되고 있습니다',
+    'error.envInconsistentProjectId': '{{field}}의 프로젝트 ID가 일치하지 않습니다 (예상: {{expected}})',
+    'error.envStep1': 'env.example 파일을 .env로 복사하세요',
+    'error.envStep2': '모든 예시 값을 실제 Firebase 프로젝트 값으로 교체하세요',
+    'error.envStep3': '모든 값이 올바른 형식인지 확인하세요',
+    'error.envStep4': '개발 서버를 재시작하세요',
+    
     'error.fetchNotesFailed': '노트 불러오기 실패',
     'error.noteNotFound': '노트를 찾을 수 없습니다.',
 
@@ -308,6 +324,23 @@ const en = {
     'error.tagInitFailed': 'Failed to initialize tags',
     'error.firebaseProjectIdMissing': 'Firebase Project ID is not set. Please check environment variables.',
     'error.tagUsageUpdateFailed': 'An error occurred while updating tag usage',
+    
+    // 환경 변수 검증 에러
+    'error.envValidationFailed': 'Firebase Environment Variables Validation Failed',
+    'error.envValidationDescription': 'Environment variables setup is required for Firebase connection.',
+    'error.envValidationErrors': 'Issues Found',
+    'error.envValidationSteps': 'How to Fix',
+    'error.envRequired': '{{field}} environment variable is not set',
+    'error.envTooShort': '{{field}} value is too short (minimum {{minLength}} characters)',
+    'error.envTooLong': '{{field}} value is too long (maximum {{maxLength}} characters)',
+    'error.envInvalidFormat': '{{field}} format is invalid ({{description}})',
+    'error.envExampleValue': '{{field}} is using example value',
+    'error.envInconsistentProjectId': '{{field}} project ID does not match (expected: {{expected}})',
+    'error.envStep1': 'Copy env.example file to .env',
+    'error.envStep2': 'Replace all example values with your actual Firebase project values',
+    'error.envStep3': 'Ensure all values follow the correct format',
+    'error.envStep4': 'Restart the development server',
+    
     'error.fetchNotesFailed': 'Failed to fetch notes',
     'error.noteNotFound': 'Note not found',
 
