@@ -91,7 +91,7 @@ const isDevelopment = import.meta.env.MODE === 'development';
  * @returns 검증 에러 배열
  */
 function validateField(
-  field: keyof FirebaseEnvVars, 
+  field: keyof FirebaseEnvVars,
   value: string | undefined
 ): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -117,9 +117,9 @@ function validateField(
     errors.push({
       field,
       code: 'TOO_SHORT',
-      message: i18n.t('error.envTooShort', { 
-        field: field.toUpperCase(), 
-        minLength: rule.minLength 
+      message: i18n.t('error.envTooShort', {
+        field: field.toUpperCase(),
+        minLength: rule.minLength
       }),
       severity: 'error'
     });
@@ -129,9 +129,9 @@ function validateField(
     errors.push({
       field,
       code: 'TOO_LONG',
-      message: i18n.t('error.envTooLong', { 
-        field: field.toUpperCase(), 
-        maxLength: rule.maxLength 
+      message: i18n.t('error.envTooLong', {
+        field: field.toUpperCase(),
+        maxLength: rule.maxLength
       }),
       severity: 'error'
     });
@@ -142,7 +142,7 @@ function validateField(
     errors.push({
       field,
       code: 'INVALID_FORMAT',
-      message: i18n.t('error.envInvalidFormat', { 
+      message: i18n.t('error.envInvalidFormat', {
         field: field.toUpperCase(),
         description: rule.description
       }),
@@ -200,7 +200,7 @@ export function validateFirebaseEnv(envVars: Partial<FirebaseEnvVars>): Validati
   // 프로젝트 일관성 검증
   if (envVars.projectId && envVars.authDomain && envVars.storageBucket) {
     const projectIdFromDomain = envVars.authDomain.replace('.firebaseapp.com', '');
-    
+
     // Storage Bucket에서 프로젝트 ID 추출 (두 가지 형식 지원)
     let projectIdFromBucket = '';
     if (envVars.storageBucket.includes('.appspot.com')) {
@@ -213,7 +213,7 @@ export function validateFirebaseEnv(envVars: Partial<FirebaseEnvVars>): Validati
       errors.push({
         field: 'authDomain',
         code: 'INCONSISTENT_PROJECT_ID',
-        message: i18n.t('error.envInconsistentProjectId', { 
+        message: i18n.t('error.envInconsistentProjectId', {
           field: 'AUTH_DOMAIN',
           expected: `${envVars.projectId}.firebaseapp.com`
         }),
@@ -223,14 +223,14 @@ export function validateFirebaseEnv(envVars: Partial<FirebaseEnvVars>): Validati
 
     if (projectIdFromBucket && envVars.projectId !== projectIdFromBucket) {
       // 어떤 형식을 사용하고 있는지 확인하여 적절한 메시지 표시
-      const expectedFormat = envVars.storageBucket.includes('.appspot.com') 
+      const expectedFormat = envVars.storageBucket.includes('.appspot.com')
         ? `${envVars.projectId}.appspot.com`
         : `${envVars.projectId}.firebasestorage.app`;
-        
+
       errors.push({
         field: 'storageBucket',
         code: 'INCONSISTENT_PROJECT_ID',
-        message: i18n.t('error.envInconsistentProjectId', { 
+        message: i18n.t('error.envInconsistentProjectId', {
           field: 'STORAGE_BUCKET',
           expected: expectedFormat
         }),
@@ -279,11 +279,11 @@ export function loadAndValidateEnv(): ValidationResult {
     console.log('Current Mode:', import.meta.env.MODE);
     console.log('Base URL:', import.meta.env.BASE_URL);
     console.log('Environment Variables:');
-    
+
     Object.entries(envVars).forEach(([key, value]) => {
       console.log(`- ${key}:`, value ? `"${value}"` : '❌ undefined');
     });
-    
+
     // 모든 VITE_ 환경 변수 표시
     console.log('\nAll VITE_ Environment Variables:');
     Object.keys(import.meta.env).forEach(key => {
@@ -304,7 +304,7 @@ export function loadAndValidateEnv(): ValidationResult {
 export function logValidationResult(result: ValidationResult): void {
   if (result.isValid) {
     console.log('✅ Firebase environment variables validation passed');
-    
+
     if (result.warnings.length > 0) {
       console.warn('⚠️  Firebase environment variables warnings:');
       result.warnings.forEach(warning => {

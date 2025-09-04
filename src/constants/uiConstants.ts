@@ -10,10 +10,10 @@ export const TIMING = {
   MODAL_ANIMATION_DELAY: 200,        // 모달 닫기 애니메이션 지연
   FOCUS_DELAY: 100,                  // 포커싱 지연 (모달 애니메이션 고려)
   CONTENT_CHANGE_DELAY: 100,         // 내용 변경 감지 지연
-  
+
   // 즉시 실행
   IMMEDIATE: 0,                      // setTimeout 즉시 실행용
-  
+
   // 참고: CSS 트랜지션 시간은 index.css의 CSS 변수로 관리됨
   // --transition-fast: 200ms
   // --transition-normal: 300ms
@@ -24,13 +24,13 @@ export const TIMING = {
 export const LAYOUT = {
   // 콘텐츠 표시 설정
   NOTE_CARD_CONTENT_LINES: 3,        // 노트 카드 내용 표시 줄 수
-  
+
   // 사이드바
   SIDEBAR_WIDTH: 64,                 // 사이드바 기본 폭 (w-64 = 16rem = 256px)
-  
+
   // 모달
   MODAL_MARGIN: 4,                   // 모달 여백 (mx-4)
-  
+
   // 참고: CSS로 이동된 레이아웃 상수들
   // --note-card-min-width: 300px (CSS 그리드에서 사용)
   // --modal-max-height: 90vh (CSS 클래스에서 사용)
@@ -61,14 +61,14 @@ export const Z_INDEX = {
 export const COLORS = {
   // 기본 태그 색상
   DEFAULT_TAG_COLOR: '#3b82f6',      // blue-500
-  
+
   // 우선순위 색상 (CSS 변수와 연동)
   PRIORITY: {
     LOW: 'var(--color-priority-low)',
-    MEDIUM: 'var(--color-priority-medium)', 
+    MEDIUM: 'var(--color-priority-medium)',
     HIGH: 'var(--color-priority-high)',
   },
-  
+
   // 배경색
   DEFAULT_BACKGROUND: '#ffffff',     // 기본 노트 배경색
 } as const;
@@ -82,14 +82,14 @@ export const SIZES = {
     LARGE: 24,                       // 큰 아이콘
     EXTRA_LARGE: 32,                 // 매우 큰 아이콘
   },
-  
+
   // 입력 필드
   INPUT: {
     HEIGHT: 10,                      // h-10 = 2.5rem = 40px
     PADDING_X: 3,                    // px-3 = 0.75rem = 12px
     PADDING_Y: 2,                    // py-2 = 0.5rem = 8px
   },
-  
+
   // 버튼
   BUTTON: {
     SMALL: {
@@ -107,7 +107,7 @@ export const SIZES = {
 export const DEV = {
   // 개발 서버
   DEFAULT_PORT: 5173,                // Vite 기본 포트
-  
+
   // 디버그
   LOG_LEVEL: 'info',                 // 로그 레벨
 } as const;
@@ -117,10 +117,10 @@ export const PERFORMANCE = {
   // Debounce 시간
   SEARCH_DEBOUNCE: 300,              // 검색 입력 debounce (ms)
   RESIZE_DEBOUNCE: 150,              // 리사이즈 debounce (ms)
-  
+
   // 페이지네이션
   ITEMS_PER_PAGE: 20,                // 페이지당 아이템 수
-  
+
   // 캐시
   CACHE_DURATION: 5 * 60 * 1000,     // 5분 (ms)
 } as const;
@@ -130,7 +130,7 @@ export const LIMITS = {
   // 텍스트 길이
   NOTE_TITLE_MAX: 100,               // 노트 제목 최대 길이
   TAG_NAME_MAX: 50,                  // 태그 이름 최대 길이
-  
+
   // 개수 제한
   MAX_TAGS_PER_NOTE: 10,             // 노트당 최대 태그 수
   MAX_NOTES_DISPLAY: 1000,           // 화면에 표시할 최대 노트 수

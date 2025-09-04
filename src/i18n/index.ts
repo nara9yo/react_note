@@ -102,6 +102,7 @@ const ko = {
     'error.tagUpdateFailed': '태그 업데이트 실패',
     'error.tagDeleteFailed': '태그 삭제 실패',
     'error.tagInitFailed': '태그 초기화 실패',
+    'error.deltaToHtmlFailed': '콘텐츠 변환 중 오류가 발생했습니다',
     'error.firebaseProjectIdMissing': 'Firebase Project ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.',
     'error.tagUsageUpdateFailed': '태그 사용량 업데이트 중 오류 발생',
     
@@ -322,6 +323,7 @@ const en = {
     'error.tagUpdateFailed': 'Failed to update tag',
     'error.tagDeleteFailed': 'Failed to delete tag',
     'error.tagInitFailed': 'Failed to initialize tags',
+    'error.deltaToHtmlFailed': 'An error occurred while converting content',
     'error.firebaseProjectIdMissing': 'Firebase Project ID is not set. Please check environment variables.',
     'error.tagUsageUpdateFailed': 'An error occurred while updating tag usage',
     

@@ -49,10 +49,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const getTagCounts = () => {
     const tagCounts: { [key: string]: number } = {};
     const allTags: Tag[] = [];
-    
+
     // archive되거나 deleted된 노트 제외
     const activeNotes = notes.filter(note => !note.archived && !note.deleted);
-    
+
     activeNotes.forEach(note => {
       if (note.tags.length === 0) {
         tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
@@ -73,10 +73,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const getArchivedTagCounts = () => {
     const tagCounts: { [key: string]: number } = {};
     const allTags: Tag[] = [];
-    
+
     // archived된 노트만 포함 (deleted 제외)
     const archivedNotes = notes.filter(note => note.archived && !note.deleted);
-    
+
     archivedNotes.forEach(note => {
       if (note.tags.length === 0) {
         tagCounts['untagged'] = (tagCounts['untagged'] || 0) + 1;
@@ -201,11 +201,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="h-full overflow-y-auto">
           {/* Notes 섹션 */}
           <div className="p-4">
-            <div 
+            <div
               className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${currentView === 'notes' && !selectedTag
-                  ? 'bg-yellow-200 text-yellow-800' 
-                  : 'hover:bg-yellow-100 text-gray-700'
-              }`}
+                ? 'bg-yellow-200 text-yellow-800'
+                : 'hover:bg-yellow-100 text-gray-700'
+                }`}
               onClick={() => handleViewChange('notes')}
             >
               <BookOpen size={20} />
@@ -218,11 +218,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-3 space-y-1">
                 {/* 태그 미지정 */}
                 {tagCounts['untagged'] > 0 && (
-                  <div 
+                  <div
                     className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === 'untagged'
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick('untagged')}
                   >
                     <TagIcon size={16} />
@@ -233,15 +233,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* 태그별 분류 */}
                 {allTags.map(tag => (
-                  <div 
+                  <div
                     key={tag.id}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === tag.name
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick(tag.name)}
                   >
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
@@ -266,11 +266,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Archive 섹션 */}
           <div className="p-4 border-t border-yellow-200">
-            <div 
+            <div
               className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${currentView === 'archive' && !selectedTag
-                  ? 'bg-yellow-200 text-yellow-800' 
-                  : 'hover:bg-yellow-100 text-gray-700'
-              }`}
+                ? 'bg-yellow-200 text-yellow-800'
+                : 'hover:bg-yellow-100 text-gray-700'
+                }`}
               onClick={() => handleViewChange('archive')}
             >
               <Archive size={20} />
@@ -283,11 +283,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-3 space-y-1">
                 {/* 태그 미지정 */}
                 {archivedTagCounts['untagged'] > 0 && (
-                  <div 
+                  <div
                     className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === 'untagged'
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick('untagged')}
                   >
                     <TagIcon size={16} />
@@ -298,15 +298,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* 태그별 분류 */}
                 {archivedAllTags.map(tag => (
-                  <div 
+                  <div
                     key={tag.id}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === tag.name
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick(tag.name)}
                   >
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
@@ -320,11 +320,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Trash 섹션 */}
           <div className="p-4 border-t border-yellow-200">
-            <div 
+            <div
               className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${currentView === 'trash'
-                  ? 'bg-yellow-200 text-yellow-800' 
-                  : 'hover:bg-yellow-100 text-gray-700'
-              }`}
+                ? 'bg-yellow-200 text-yellow-800'
+                : 'hover:bg-yellow-100 text-gray-700'
+                }`}
               onClick={() => handleViewChange('trash')}
             >
               <Trash2 size={20} />
@@ -337,11 +337,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="mt-3 space-y-1">
                 {/* 태그 미지정 */}
                 {deletedTagCounts['untagged'] > 0 && (
-                  <div 
+                  <div
                     className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === 'untagged'
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick('untagged')}
                   >
                     <TagIcon size={16} />
@@ -352,15 +352,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* 태그별 분류 */}
                 {deletedAllTags.map(tag => (
-                  <div 
+                  <div
                     key={tag.id}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded cursor-pointer transition-colors duration-200 ${selectedTag === tag.name
-                        ? 'bg-yellow-200 text-yellow-800' 
-                        : 'hover:bg-yellow-100 text-gray-600'
-                    }`}
+                      ? 'bg-yellow-200 text-yellow-800'
+                      : 'hover:bg-yellow-100 text-gray-600'
+                      }`}
                     onClick={() => handleTagClick(tag.name)}
                   >
-                    <div 
+                    <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />

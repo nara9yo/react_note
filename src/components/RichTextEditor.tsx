@@ -170,20 +170,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     // Sync external value to editor
     useEffect(() => {
         const quill = quillRef.current;
-        
+
         // Early return: Quill이나 에디터 요소가 없는 경우
         if (!quill || !editorRef.current) return;
 
         // Early return: 에디터가 포커스 중인 경우
         if (quill.hasFocus()) return;
-        
+
         try {
             if (initialDelta) {
                 const delta = JSON.parse(initialDelta);
                 quill.setContents(delta);
                 return;
             }
-            
+
             if (value) {
                 const currentHtml = editorRef.current.innerHTML;
                 if (value !== currentHtml) {

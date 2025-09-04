@@ -3,7 +3,7 @@
  * - 리치 텍스트 에디터의 Delta 형식을 HTML로 변환
  * - 노트 카드에서 서식이 적용된 텍스트 표시용
  */
-
+import i18n from '../i18n';
 // Delta Operation 인터페이스
 // - Quill 에디터의 개별 텍스트 조작 단위
 interface DeltaOp {
@@ -55,15 +55,17 @@ export function deltaToHtml(deltaJson: string): string {
     let inList = false;
     let listType: 'ordered' | 'bullet' | null = null;
     let listItems: string[] = [];
+    let inBlockquote = false;
+    let blockquoteContent = '';
 
     for (let i = 0; i < delta.ops.length; i++) {
       const op = delta.ops[i];
       const nextOp = delta.ops[i + 1];
-      
+
       // Early return: 문자열이 아닌 경우 임베드 처리
       if (typeof op.insert !== 'string') {
         if (!op.insert || typeof op.insert !== 'object') continue;
-        
+
         const insertObj = op.insert as Record<string, string>;
         if (insertObj.image) {
           html += `<img src="${escapeHtml(insertObj.image)}" alt="Image" style="max-width: 100%; height: auto;">`;
@@ -96,6 +98,32 @@ export function deltaToHtml(deltaJson: string): string {
 
       // Early return: 줄바꿈 처리
       if (text === '\n') {
+        // 인용문 처리
+        if (attributes.blockquote) {
+          // 이전 리스트 종료
+          if (inList && listItems.length > 0) {
+            html += closeList(listType!, listItems);
+            listItems = [];
+            inList = false;
+            listType = null;
+          }
+
+          // 인용문 블록 시작 또는 계속
+          if (!inBlockquote) {
+            inBlockquote = true;
+            blockquoteContent = '';
+          }
+          blockquoteContent += '<br>';
+          continue;
+        } else if (inBlockquote) {
+          // 인용문 블록 종료
+          if (blockquoteContent.trim()) {
+            html += `<blockquote style="margin: 0 0 1em 0; padding: 0.5em 1em; border-left: 4px solid #ccc; background-color: #f9f9f9; font-style: italic;">${blockquoteContent}</blockquote>`;
+          }
+          inBlockquote = false;
+          blockquoteContent = '';
+        }
+
         // 리스트 아이템 처리
         if (attributes.list) {
           if (listType !== attributes.list) {
@@ -110,7 +138,7 @@ export function deltaToHtml(deltaJson: string): string {
           listItems.push('');
           continue;
         }
-        
+
         // 일반 줄바꿈
         if (inList) {
           html += closeList(listType!, listItems);
@@ -123,10 +151,25 @@ export function deltaToHtml(deltaJson: string): string {
       }
 
       // 텍스트 추가 처리
-      const isNextOpListItem = nextOp && 
-        typeof nextOp.insert === 'string' && 
-        nextOp.insert === '\n' && 
+      const isNextOpListItem = nextOp &&
+        typeof nextOp.insert === 'string' &&
+        nextOp.insert === '\n' &&
         nextOp.attributes?.list;
+
+      const isNextOpBlockquote = nextOp &&
+        typeof nextOp.insert === 'string' &&
+        nextOp.insert === '\n' &&
+        nextOp.attributes?.blockquote;
+
+      if (isNextOpBlockquote) {
+        // 다음이 인용문 줄바꿈인 경우, 현재 텍스트를 인용문으로 처리
+        if (!inBlockquote) {
+          inBlockquote = true;
+          blockquoteContent = '';
+        }
+        blockquoteContent += formattedText;
+        continue;
+      }
 
       if (isNextOpListItem && nextOp.attributes) {
         // 다음이 리스트 아이템인 경우
@@ -145,7 +188,10 @@ export function deltaToHtml(deltaJson: string): string {
       }
 
       // 일반 텍스트 추가
-      if (inList && listType) {
+      if (inBlockquote) {
+        // 인용문 내용에 추가
+        blockquoteContent += formattedText;
+      } else if (inList && listType) {
         if (listItems.length === 0) listItems.push('');
         listItems[listItems.length - 1] += formattedText;
       } else {
@@ -161,9 +207,14 @@ export function deltaToHtml(deltaJson: string): string {
       }
     }
 
+    // 마지막 인용문 종료
+    if (inBlockquote && blockquoteContent.trim()) {
+      html += `<blockquote style="margin: 0 0 1em 0; padding: 0.5em 1em; border-left: 4px solid #ccc; background-color: #f9f9f9; font-style: italic;">${blockquoteContent}</blockquote>`;
+    }
+
     return html;
   } catch (error) {
-    console.error('Delta to HTML conversion failed:', error);
+    console.error(i18n.t('error.deltaToHtmlFailed'), error);
     return '';
   }
 }

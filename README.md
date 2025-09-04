@@ -16,7 +16,9 @@
 8. [스크립트](#-스크립트)
 9. [배포](#-배포)
 10. [아키텍처/상태 관리](#-아키텍처상태-관리)
-11. [변경 이력](#-변경-이력)
+11. [최신 개선 사항](#-최신-개선-사항)
+12. [문제 해결/디버깅 팁](#-문제-해결디버깅-팁)
+13. [변경 이력](#-변경-이력)
 
 ---
 
@@ -56,6 +58,7 @@ Firebase Firestore를 백엔드로 활용한 개인 노트 관리 데모입니�
 - **오프라인 지원**: 로컬 상태 관리
 - **백업/복원**: Firebase 기반 데이터 백업
 - **정렬 옵션**: 날짜, 우선순위, 제목별 정렬
+- **API 캐싱/중복요청 제거**: 메모리 캐시/TTL + Request Dedup 제공
 
 ## 🛠️ 기술 스택
 
@@ -87,6 +90,7 @@ Firebase Firestore를 백엔드로 활용한 개인 노트 관리 데모입니�
 ### 개발 도구
 - **ESLint**: 코드 품질 관리
 - **GitHub Actions**: CI/CD 자동화
+- **Cursor AI**: 바이브 코딩, AI 페어 프로그래밍
 
 ## 🚀 시작하기
 
@@ -158,6 +162,15 @@ service cloud.firestore {
 ```
 
 **🚨 프로덕션 환경에서는 더 엄격한 보안 규칙을 설정해야 합니다.**
+
+### 5. 환경 변수 검증(권장)
+
+앱은 Firebase 환경 변수를 실행 시 검증합니다. 특히 `VITE_FIREBASE_STORAGE_BUCKET`은 다음 두 형식을 모두 지원합니다.
+
+- `your-project.appspot.com`
+- `your-project.firebasestorage.app`
+
+형식 불일치나 값 누락 시 초기화가 중단되며, 사용자 친화적 에러가 표시됩니다.
 
 ## 🚀 GitHub Pages 배포 설정
 
@@ -233,7 +246,7 @@ export const resources = {
 };
 ```
 
-## 🐛 문제 해결
+## 🐛 문제 해결/디버깅 팁
 
 ### Firebase 연결 오류
 
@@ -241,6 +254,7 @@ export const resources = {
 - Firebase 프로젝트 ID가 정확한지 확인
 - Firestore 데이터베이스가 활성화되었는지 확인
 - Firestore 보안 규칙이 올바르게 설정되었는지 확인
+- Storage Bucket 도메인이 `appspot.com` 또는 `firebasestorage.app` 형식인지 확인
 
 ### GitHub Pages 배포 실패
 
@@ -260,6 +274,7 @@ export const resources = {
 - Quill.js가 올바르게 로드되었는지 확인
 - Delta JSON 형식이 올바른지 확인
 - 브라우저 콘솔에서 에러 메시지 확인
+- 인용(Quote) 블록이 카드에서 다르게 보이면 캐시 삭제 후 새로고침
 
 ### 다국어 문제
 
@@ -321,7 +336,7 @@ export const resources = {
 VITE_FIREBASE_API_KEY=your_firebase_api_key_here
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com   # 또는 your-project.firebasestorage.app
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
@@ -346,37 +361,43 @@ npm run lint          # ESLint 검사
 
 ```
 src/
-├── app/                    # Redux 스토어 설정
-│   ├── store.ts           # Redux 스토어
-│   └── hooks.ts           # 타입이 지정된 Redux 훅들
-├── components/             # UI 컴포넌트
-│   ├── ConfirmModal.tsx   # 확인 모달
-│   ├── LanguageSelector.tsx # 언어 선택기
-│   ├── NoteCard.tsx       # 개별 노트 카드
-│   ├── NoteList.tsx       # 노트 목록
-│   ├── NoteModal.tsx      # 노트 편집 모달
-│   ├── PortalModal.tsx    # 포털 모달
-│   ├── RichTextEditor.tsx # 리치 텍스트 에디터
-│   ├── Sidebar.tsx        # 사이드바
-│   ├── SortModal.tsx      # 정렬 모달
-│   └── TagModal.tsx       # 태그 관리 모달
-├── constants/              # 상수 정의
-│   └── noteOptions.ts     # 노트 옵션 상수
-├── features/               # Redux 기능별 모듈
-│   ├── notes/             # 노트 관련 기능
-│   │   ├── notesSlice.ts  # Redux 슬라이스
-│   │   └── notesAPI.ts    # Firebase API 함수
-│   └── tags/              # 태그 관련 기능
-│       └── tagsSlice.ts   # 태그 Redux 슬라이스
-├── i18n/                   # 다국어 설정
-│   └── index.ts           # 번역 리소스
-├── types/                  # TypeScript 타입 정의
-│   └── index.ts           # 공통 타입들
-├── utils/                  # 유틸리티 함수
-│   └── deltaToHtml.ts     # Delta JSON → HTML 변환
-├── firebase.ts             # Firebase 초기화
-├── App.tsx                 # 메인 앱 컴포넌트
-└── main.tsx               # 앱 진입점
+├── app/                       # Redux 스토어/공용 훅
+│   ├── store.ts              # Redux 스토어 설정
+│   ├── hooks.ts              # 타입이 지정된 Redux 훅
+│   └── hooks/
+│       └── useLanguage.ts    # i18n 언어 선택 훅
+├── components/                # UI 컴포넌트
+│   ├── ConfirmModal.tsx      # 확인 모달
+│   ├── LanguageSelector.tsx  # 언어 선택기
+│   ├── NoteCard.tsx          # 개별 노트 카드
+│   ├── NoteList.tsx          # 노트 목록
+│   ├── NoteModal.tsx         # 노트 보기/편집 모달
+│   ├── PortalModal.tsx       # 포털 모달 (모달 마운트 포인트)
+│   ├── RichTextEditor.tsx    # Quill 래퍼 에디터
+│   ├── Sidebar.tsx           # 사이드바
+│   ├── SortModal.tsx         # 정렬 모달
+│   └── TagModal.tsx          # 태그 관리/선택 모달
+├── constants/                 # 상수/설정 값
+│   ├── noteOptions.ts        # 노트 기본값/옵션
+│   └── uiConstants.ts        # TIMING/LAYOUT/COLORS 등 UI 상수
+├── features/                  # Redux 기능 모듈
+│   ├── notes/                # 노트 관련 기능
+│   │   ├── notesSlice.ts     # 노트 슬라이스
+│   │   └── notesAPI.ts       # 노트 Firestore API
+│   └── tags/                 # 태그 관련 기능
+│       └── tagsSlice.ts      # 태그 슬라이스
+├── i18n/                      # 다국어 설정
+│   └── index.ts              # 번역 리소스/초기화
+├── types/                     # TypeScript 타입 정의
+│   └── index.ts              # 공통 타입
+├── utils/                     # 유틸리티 함수
+│   ├── apiCache.ts           # API 캐싱/요청 Dedup/TTL/무효화
+│   ├── deltaToHtml.ts        # Delta JSON → HTML 변환(인용/리스트 대응)
+│   └── envValidator.ts       # Firebase 환경 변수 검증
+├── index.css                  # 전역 스타일/CSS 변수/유틸 클래스
+├── firebase.ts                # Firebase 안전 초기화/접근자
+├── App.tsx                    # 메인 앱 컴포넌트
+└── main.tsx                  # 앱 진입점
 ```
 
 ## 🧭 아키텍처/상태 관리
@@ -393,7 +414,27 @@ src/
 ### 리치 텍스트 에디터
 - **Quill.js**: 커스텀 React 컴포넌트로 래핑
 - **Delta JSON**: 안전한 서식 데이터 저장 형식
-- **HTML 변환**: 노트 카드 표시용 유틸리티
+- **HTML 변환**: 노트 카드 표시용 유틸리티(인용/리스트/링크 지원)
+
+### 성능 최적화
+- **API 캐시**: `utils/apiCache.ts` 메모리 캐시 + TTL (기본 5분)
+- **요청 중복 제거**: 동일 키 요청은 하나만 수행, 나머지는 Promise 공유
+- **캐시 무효화**: 노트/태그 CRUD 이후 관련 캐시 자동 무효화
+- **지연 시간 단축**: 보기→수정 전환 감지 로직 최적화
+
+### 접근성/UX
+- 보기 모드에서 편집/저장 버튼 동시 노출 방지 (모드에 따라 단일 버튼)
+- 제목 입력 후 Tab으로 에디터로 포커스 이동
+- 레이블과 `htmlFor`(id) 연결 보완
+
+## 🆕 최신 개선 사항
+
+- 환경 변수 검증 강화(`utils/envValidator.ts`) 및 안전한 Firebase 초기화(`firebase.ts`)
+- `getFirestoreInstance()`로 초기화 보장 후 접근 (Slice/API에서 직접 `db` 참조 제거)
+- 인용(Quote) 블록 카드 렌더링 개선 및 스타일 추가
+- 보기 모드에서 콘텐츠 수정 시 자동으로 수정 모드 전환 (제목/내용 모두)
+- CSS 변수/유틸리티 클래스로 z-index/트랜지션/그리드 최소폭 중앙 관리(`src/index.css`)
+- UI 상수 중앙화(`constants/uiConstants.ts`) 및 JS↔CSS 분리
 
 ## 📝 변경 이력
 
@@ -415,7 +456,7 @@ src/
 - **TypeScript**: 완전한 타입 안전성
 - **커스텀 에디터**: react-quill 대신 직접 구현으로 React 19 호환
 - **접근성**: ARIA 속성, 키보드 네비게이션 지원
-- **성능 최적화**: 지연 로딩, 메모이제이션 적용
+- **성능 최적화**: 지연 로딩, 메모이제이션, API 캐싱/요청 Dedup, 캐시 무효화
 
 ---
 

@@ -64,17 +64,23 @@ function AppContent() {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, [t]);
 
-  // 앱 시작 시 태그 초기화
+  // 앱 시작 시 태그 초기화 (최적화된 버전)
   // - Firebase에서 태그 데이터 로드
   // - 각 태그의 사용량 카운트 업데이트
   useEffect(() => {
     const initializeTags = async () => {
       try {
-        // Firebase에서 태그 목록 로드
-        await dispatch(fetchTags()).unwrap();
+        // 1. 태그 목록과 사용량 카운트를 병렬로 실행
+        // fetchTags는 캐시를 사용하므로 중복 호출 방지
+        const [tagsResult] = await Promise.allSettled([
+          dispatch(fetchTags()).unwrap(),
+          dispatch(updateAllTagsUsageCount()).unwrap()
+        ]);
 
-        // 각 태그의 사용량 카운트 업데이트
-        await dispatch(updateAllTagsUsageCount()).unwrap();
+        // fetchTags 결과만 확인 (updateAllTagsUsageCount는 백그라운드 작업)
+        if (tagsResult.status === 'rejected') {
+          console.warn(t('error.tagInitFailed'), tagsResult.reason);
+        }
       } catch (error) {
         console.error(t('error.tagInitFailed'), error);
         // 오류가 발생해도 앱은 계속 실행 (태그 기능만 제한됨)

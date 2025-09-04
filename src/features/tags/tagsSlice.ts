@@ -9,6 +9,8 @@ import { getFirestoreInstance } from '../../firebase';
 import i18n from '../../i18n';
 // 타입 import
 import type { Tag } from '../../types';
+// API 캐싱 유틸리티 import
+import { cachedApiCall, invalidateCache, cacheKeys } from '../../utils/apiCache';
 
 // Firebase 컬렉션 이름 상수
 const TAGS_COLLECTION = 'tags';
@@ -28,40 +30,46 @@ const initialState: TagsState = {
   error: null,
 };
 
-// Firebase에서 태그 목록 가져오기
+// Firebase에서 태그 목록 가져오기 (캐싱 적용)
 // - Firestore의 tags 컬렉션에서 모든 태그 데이터 조회
 export const fetchTags = createAsyncThunk(
   'tags/fetchTags',
-  async () => {
-    try {
-      const db = getFirestoreInstance();
-      const tagsCollection = collection(db, TAGS_COLLECTION);
-      const querySnapshot = await getDocs(tagsCollection);
+  async (forceRefresh?: boolean) => {
+    return cachedApiCall(
+      cacheKeys.allTags(),
+      async () => {
+        try {
+          const db = getFirestoreInstance();
+          const tagsCollection = collection(db, TAGS_COLLECTION);
+          const querySnapshot = await getDocs(tagsCollection);
 
-      // 빈 컬렉션인 경우 빈 배열 반환
-      if (querySnapshot.empty) {
-        return [];
-      }
+          // 빈 컬렉션인 경우 빈 배열 반환
+          if (querySnapshot.empty) {
+            return [];
+          }
 
-      const tags: Tag[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        tags.push({
-          id: doc.id,
-          name: data.name,
-          color: data.color,
-          usageCount: data.usageCount || 0,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        });
-      });
+          const tags: Tag[] = [];
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            tags.push({
+              id: doc.id,
+              name: data.name,
+              color: data.color,
+              usageCount: data.usageCount || 0,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt,
+            });
+          });
 
-      return tags;
-    } catch (error) {
-      console.error(i18n.t('message.loadTagsFailed'), error);
-      // 오류 발생 시 빈 배열 반환
-      return [];
-    }
+          return tags;
+        } catch (error) {
+          console.error(i18n.t('message.loadTagsFailed'), error);
+          // 오류 발생 시 빈 배열 반환
+          return [];
+        }
+      },
+      { forceRefresh: forceRefresh || false }
+    );
   }
 );
 
@@ -79,10 +87,15 @@ export const addTag = createAsyncThunk(
     const db = getFirestoreInstance();
     const docRef = await addDoc(collection(db, TAGS_COLLECTION), tagData);
 
-    return {
+    const newTag = {
       id: docRef.id,
       ...tagData,
     };
+
+    // 캐시 무효화 (새 태그가 추가되었으므로)
+    invalidateCache.tags();
+
+    return newTag;
   }
 );
 
@@ -100,6 +113,10 @@ export const updateTag = createAsyncThunk(
     const tagRef = doc(db, TAGS_COLLECTION, tag.id);
     await updateDoc(tagRef, updateData);
 
+    // 캐시 무효화 (태그가 수정되었으므로)
+    invalidateCache.tag(tag.id);
+    invalidateCache.tags();
+
     return {
       ...tag,
       updatedAt: now,
@@ -114,6 +131,10 @@ export const deleteTag = createAsyncThunk(
     const db = getFirestoreInstance();
     const tagRef = doc(db, TAGS_COLLECTION, tagId);
     await deleteDoc(tagRef);
+
+    // 캐시 무효화 (태그가 삭제되었으므로)
+    invalidateCache.tag(tagId);
+    invalidateCache.tags();
 
     return tagId;
   }
